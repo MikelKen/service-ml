@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  ml-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml-service
+    ports:
+      - "3001:3001"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - HOST=0.0.0.0
+      - PORT=3001
+    volumes:
+      # Mount source code for development (comment out for production)
+      - .:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:3001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ml-network
+
+networks:
+  ml-network:
+    driver: bridge
