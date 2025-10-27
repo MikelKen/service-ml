@@ -2,10 +2,12 @@ import strawberry
 from typing import List, Optional
 from app.schemas.product_schema import Product, ProductRecommendation, MLPrediction, HealthStatus
 from app.services.product_service import product_service
+from app.graphql.ml_queries import MLQuery
 
 
 @strawberry.type
-class Query:
+class Query(MLQuery):
+    """Queries principales del microservicio - ahora incluye ML"""
     
     @strawberry.field(description="Get service health status")
     def health(self) -> HealthStatus:

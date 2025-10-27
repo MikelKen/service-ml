@@ -2,10 +2,12 @@ import strawberry
 from typing import Optional
 from app.schemas.product_schema import Product, ProductInput, ProductUpdateInput
 from app.services.product_service import product_service
+from app.graphql.ml_mutations import MLMutation
 
 
 @strawberry.type
-class Mutation:
+class Mutation(MLMutation):
+    """Mutaciones principales del microservicio - ahora incluye ML"""
     
     @strawberry.mutation(description="Create a new product")
     def create_product(self, input: ProductInput) -> Product:
