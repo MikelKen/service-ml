@@ -18,10 +18,10 @@ def test_data_loading():
         df = pd.read_csv("postulaciones_sinteticas_500.csv")
         print(f"✅ Datos cargados: {df.shape[0]} filas, {df.shape[1]} columnas")
         print(f"Columnas: {list(df.columns)}")
-        return df
+        return True  # Retornar booleano en lugar de DataFrame
     except Exception as e:
         print(f"❌ Error cargando datos: {e}")
-        return None
+        return False
 
 def test_preprocessing():
     """Prueba el preprocessamiento básico"""
@@ -209,8 +209,23 @@ def main():
     print("\n" + "=" * 50)
     print("📊 RESUMEN DE PRUEBAS:")
     
-    passed = sum(results)
-    total = len(results)
+    # Función auxiliar para convertir resultados a booleanos de forma segura
+    def safe_bool_conversion(result):
+        if isinstance(result, bool):
+            return result
+        elif isinstance(result, (int, float)):
+            return bool(result)
+        elif hasattr(result, 'empty'):  # Para DataFrames
+            return not result.empty
+        elif result is None:
+            return False
+        else:
+            return True  # Si hay cualquier otro valor, considerarlo como True
+    
+    # Convertir todos los resultados a booleanos de forma segura
+    bool_results = [safe_bool_conversion(result) for result in results]
+    passed = sum(bool_results)
+    total = len(bool_results)
     
     test_names = [
         "Carga de Datos",
@@ -220,7 +235,7 @@ def main():
         "Estructura Predictor"
     ]
     
-    for i, (name, result) in enumerate(zip(test_names, results)):
+    for i, (name, result) in enumerate(zip(test_names, bool_results)):
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"{i+1}. {name}: {status}")
     

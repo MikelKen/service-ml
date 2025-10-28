@@ -2,18 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import strawberry
 from strawberry.fastapi import GraphQLRouter
-from strawberry.tools import merge_types
 import uvicorn
 
 from app.config.settings import settings
-from app.graphql.queries import Query
-from app.graphql.mutations import Mutation
-from app.routers import products
+from app.graphql.simple_ml import Query, Mutation
+from app.routers import health
 
 # Create FastAPI app
 app = FastAPI(
-    title="ML Service API",
-    description="Machine Learning microservice for product recommendations and analytics",
+    title="ML Hiring Service API",
+    description="Machine Learning microservice for hiring prediction and analytics",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -37,22 +35,22 @@ graphql_app = GraphQLRouter(schema)
 # Add GraphQL endpoint
 app.include_router(graphql_app, prefix="/graphql")
 
-# Add REST API routes
-app.include_router(products.router, prefix="/api")
+# Add health check routes
+app.include_router(health.router, prefix="/api")
 
 
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
-        "service": "ML Service",
+        "service": "ML Hiring Service",
         "status": "running",
         "version": "1.0.0",
-        "description": "Machine Learning microservice for product recommendations and analytics",
+        "description": "Machine Learning microservice for hiring prediction and analytics",
         "endpoints": {
             "graphql": "/graphql",
             "graphql_playground": "/graphql",
-            "rest_api": "/api",
+            "health": "/api/health",
             "docs": "/docs",
             "redoc": "/redoc"
         }
@@ -64,7 +62,7 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "service": "ml-service",
+        "service": "ml-hiring-service",
         "version": "1.0.0"
     }
 
@@ -73,15 +71,14 @@ async def health_check():
 async def get_service_info():
     """Service information endpoint"""
     return {
-        "name": "ML Service",
-        "description": "Machine Learning microservice",
+        "name": "ML Hiring Service",
+        "description": "Machine Learning microservice for hiring prediction",
         "version": "1.0.0",
         "features": [
-            "Product recommendations",
-            "Demand prediction",
+            "Hiring probability prediction",
+            "Candidate evaluation",
             "ML analytics",
-            "GraphQL API",
-            "REST API"
+            "GraphQL API"
         ],
         "technologies": [
             "FastAPI",
