@@ -1,222 +1,253 @@
-# ML Service - Microservicio de Machine Learning
+# 🤖 Microservicio de ML para Predicción de Contratación
 
-Este es un microservicio de Machine Learning construido con FastAPI que proporciona APIs REST y GraphQL para recomendaciones de productos y análisis ML.
+Sistema de Machine Learning que predice la probabilidad de que un candidato sea contactado por reclutadores, integrado con FastAPI + GraphQL.
 
 ## 🚀 Características
 
-- **FastAPI**: Framework web moderno y rápido
-- **GraphQL**: API GraphQL con Strawberry
-- **REST API**: Endpoints REST tradicionales
-- **Machine Learning**: Integración con scikit-learn
-- **Docker**: Completamente dockerizado
-- **Health Checks**: Monitoreo de salud del servicio
+- **Predicción inteligente**: Modelo RandomForest que evalúa candidatos realísticamente
+- **API GraphQL**: Interfaz moderna para consultas y mutaciones
+- **Datos realistas**: Generación de datos sintéticos con lógica empresarial
+- **Validación integrada**: Ejemplos de prueba categorizados
+- **Dockerizado**: Listo para despliegue en contenedores
 
-## 📋 Requisitos
+## 📁 Estructura del Proyecto
+
+```
+service_ml/
+├── app/                          # API FastAPI + GraphQL
+│   ├── __init__.py
+│   ├── main.py                   # Aplicación principal
+│   ├── config/
+│   │   ├── __init__.py
+│   │   └── settings.py           # Configuración
+│   ├── graphql/
+│   │   ├── __init__.py
+│   │   ├── simple_ml.py          # Schema GraphQL ML
+│   │   ├── ml_queries.py         # Consultas GraphQL
+│   │   └── ml_mutations.py       # Mutaciones GraphQL
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   └── health.py             # Health check
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   └── ml_schemas.py         # Schemas Pydantic
+│   └── services/
+│       ├── __init__.py
+│       └── ml_service.py         # Servicios ML
+├── ml/                           # Módulos de Machine Learning
+│   ├── __init__.py
+│   ├── data/
+│   │   ├── __init__.py
+│   │   └── preprocessing.py      # Preprocesamiento
+│   ├── features/
+│   │   ├── __init__.py
+│   │   └── feature_engineering.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── predictor.py          # Predictor base
+│   │   └── trainer.py            # Entrenador
+│   └── utils/
+│       └── __init__.py
+├── trained_models/               # Modelos entrenados
+│   └── simple_hiring_model.pkl  # Modelo principal
+├── notebooks/                    # Jupyter notebooks
+│   └── eda_analisis_exploratorio.ipynb
+├── simple_predictor.py          # ✅ Predictor principal
+├── train_simple.py              # ✅ Script de entrenamiento
+├── generate_realistic_data.py   # ✅ Generador de datos
+├── datos_entrenamiento_realista.csv  # ✅ Datos de entrenamiento
+├── EJEMPLOS_VALIDACION.md       # ✅ Ejemplos para pruebas
+├── Dockerfile                   # Configuración Docker
+├── docker-compose.yml           # Orquestación Docker
+└── README.md                    # Este archivo
+```
+
+## 🛠️ Instalación y Configuración
+
+### Prerrequisitos
 
 - Python 3.11+
-- Docker y Docker Compose (recomendado)
+- pip
+- Docker (opcional)
 
-## 🐳 Ejecutar con Docker
+### Instalación Local
 
-### Usando Docker Compose (Recomendado)
-
-```bash
-# Construir y ejecutar el servicio
-docker-compose up --build
-
-# Ejecutar en segundo plano
-docker-compose up -d --build
-
-# Ver logs
-docker-compose logs -f
-
-# Detener el servicio
-docker-compose down
-```
-
-### Usando Docker directamente
+1. **Clonar repositorio**
 
 ```bash
-# Construir la imagen
-docker build -t ml-service .
-
-# Ejecutar el contenedor
-docker run -p 3001:3001 --name ml-service ml-service
-
-# Ejecutar en segundo plano
-docker run -d -p 3001:3001 --name ml-service ml-service
+git clone <repository-url>
+cd service_ml
 ```
 
-## 🛠️ Desarrollo Local
-
-### 1. Crear entorno virtual
+2. **Crear entorno virtual**
 
 ```bash
 python -m venv .venv
 .venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
+source .venv/bin/activate  # Linux/Mac
 ```
 
-### 2. Instalar dependencias
+3. **Instalar dependencias**
 
 ```bash
-pip install -r requirements.txt
+pip install pandas numpy scikit-learn joblib fastapi strawberry-graphql uvicorn
 ```
 
-### 3. Configurar variables de entorno
+4. **Generar datos y entrenar modelo**
 
 ```bash
-# Copiar archivo de ejemplo
-copy .env.example .env  # Windows
-# cp .env.example .env  # Linux/Mac
-
-# Editar .env con tus configuraciones
+python generate_realistic_data.py
+python train_simple.py
 ```
 
-### 4. Ejecutar la aplicación
+5. **Ejecutar servidor**
 
 ```bash
-# Opción 1: Ejecutar directamente
-python -m app.main
-
-# Opción 2: Usar el script de ejecución
-python run.py
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
-## 📡 Endpoints
+## 🎯 Uso de la API
 
-Una vez ejecutándose, el servicio estará disponible en:
+### GraphQL Endpoint
 
-- **Aplicación principal**: http://localhost:3001
-- **Documentación API (Swagger)**: http://localhost:3001/docs
-- **Documentación alternativa (ReDoc)**: http://localhost:3001/redoc
-- **GraphQL Playground**: http://localhost:3001/graphql
-- **API REST**: http://localhost:3001/api
-- **Health Check**: http://localhost:3001/health
+- **URL**: http://localhost:8000/graphql
+- **Interfaz gráfica**: Incluida para pruebas
+
+### Mutación Principal: predictHiring
+
+```graphql
+mutation {
+  predictHiring(
+    nombre: "Juan Pérez"
+    anosExperiencia: 5
+    nivelEducacion: "licenciatura"
+    habilidades: "python, machine learning, sql"
+    idiomas: "español, inglés"
+    certificaciones: "aws certified developer"
+    titulo: "Data Scientist"
+    requisitos: "python, sql, machine learning"
+    salario: 18000
+  ) {
+    prediction # 0 o 1 (no/sí contactar)
+    probability # Probabilidad (0.0-1.0)
+    confidenceLevel # "Muy Baja" a "Muy Alta"
+    recommendation # Recomendación textual
+    modelUsed # Modelo utilizado
+  }
+}
+```
+
+### Consulta de Estado del Modelo
+
+```graphql
+query {
+  modelStatus {
+    isLoaded
+    modelName
+    accuracy
+    featuresCount
+  }
+}
+```
+
+## 📊 Validación del Modelo
+
+Utiliza el archivo `EJEMPLOS_VALIDACION.md` que contiene 10 casos de prueba categorizados:
+
+- 🟢 **Muy Alta Probabilidad** (>80%): Candidatos ideales
+- 🟡 **Alta Probabilidad** (60-80%): Buenos candidatos
+- 🟠 **Probabilidad Media** (40-60%): Considerar cuidadosamente
+- 🔴 **Baja Probabilidad** (20-40%): Probablemente no
+- ⚫ **Muy Baja Probabilidad** (<20%): Definitivamente no
+
+## 🧠 Cómo Funciona el Modelo
+
+### Features Principales
+
+1. **Años de experiencia** con optimización (penaliza extremos)
+2. **Skill match** (coincidencia de habilidades requeridas)
+3. **Salario por experiencia** (detecta candidatos caros/baratos)
+4. **Nivel educativo** (técnico=1, licenciatura=2, maestría=3, doctorado=4)
+5. **Certificaciones** (binario: tiene/no tiene)
+6. **Número de habilidades**
+7. **Tiempo desde publicación** del trabajo
+
+### Lógica Empresarial
+
+- **Experiencia óptima**: 3-12 años (penaliza 0-2 años y >15 años)
+- **Skills relevantes**: Mayor coincidencia = mayor probabilidad
+- **Costo-beneficio**: Salarios muy altos reducen probabilidad
+- **Sobrecalificación**: Detecta candidatos demasiado senior para el puesto
+
+## 🐳 Docker
+
+### Construcción
+
+```bash
+docker-compose build
+```
+
+### Ejecución
+
+```bash
+docker-compose up
+```
+
+La aplicación estará disponible en http://localhost:8000
+
+## 📈 Métricas del Modelo
+
+- **Accuracy**: ~73%
+- **Algoritmo**: RandomForest con 100 estimadores
+- **Balanceado**: class_weight='balanced' para manejar desbalance
+- **Features**: 12 características engineered
+
+## 🔄 Reentrenamiento
+
+Para reentrenar el modelo con nuevos datos:
+
+```bash
+# Generar nuevos datos sintéticos
+python generate_realistic_data.py
+
+# Entrenar modelo
+python train_simple.py
+```
+
+## 🚨 Limitaciones Conocidas
+
+1. **Datos sintéticos**: Basado en datos generados, no reales
+2. **Simplicidad**: Modelo básico para demostración
+3. **Features limitadas**: Solo considera información básica del CV
+4. **Sin feedback loop**: No aprende de decisiones reales de RH
 
 ## 🔧 Configuración
 
-### Variables de Entorno
+Variables de entorno disponibles:
 
-| Variable       | Descripción              | Valor por defecto |
-| -------------- | ------------------------ | ----------------- |
-| `HOST`         | Host del servidor        | `0.0.0.0`         |
-| `PORT`         | Puerto del servidor      | `3001`            |
-| `DEBUG`        | Modo debug               | `true`            |
-| `ENVIRONMENT`  | Entorno de ejecución     | `development`     |
-| `CORS_ORIGINS` | Orígenes CORS permitidos | `*`               |
-| `GRAPHQL_PATH` | Ruta de GraphQL          | `/graphql`        |
-| `API_PREFIX`   | Prefijo de la API REST   | `/api`            |
-
-## 🧪 Pruebas
-
-```bash
-# Ejecutar pruebas
-pytest
-
-# Ejecutar con cobertura
-pytest --cov=app
-
-# Ejecutar pruebas específicas
-pytest tests/test_products.py
-```
-
-## 📦 Estructura del Proyecto
-
-```
-.
-├── app/
-│   ├── __init__.py
-│   ├── main.py              # Aplicación principal
-│   ├── config/
-│   │   ├── __init__.py
-│   │   └── settings.py      # Configuraciones
-│   ├── graphql/
-│   │   ├── __init__.py
-│   │   ├── schema.py        # Schema GraphQL
-│   │   ├── queries.py       # Queries GraphQL
-│   │   └── mutations.py     # Mutations GraphQL
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── product.py       # Modelos de datos
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── products.py      # Rutas de productos
-│   │   └── health.py        # Health checks
-│   ├── schemas/
-│   │   ├── __init__.py
-│   │   └── product_schema.py # Schemas Pydantic
-│   └── services/
-│       ├── __init__.py
-│       └── product_service.py # Lógica de negocio
-├── .env.example             # Variables de entorno de ejemplo
-├── .gitignore              # Archivos ignorados por Git
-├── .dockerignore           # Archivos ignorados por Docker
-├── Dockerfile              # Configuración Docker
-├── docker-compose.yml      # Configuración Docker Compose
-├── requirements.txt        # Dependencias Python
-├── run.py                  # Script de ejecución
-└── README.md              # Este archivo
-```
-
-## 🔍 Monitoreo
-
-### Health Checks
-
-El servicio incluye health checks automáticos:
-
-- **Endpoint**: `/health`
-- **Docker Health Check**: Configurado en el Dockerfile
-- **Intervalo**: 30 segundos
-- **Timeout**: 10 segundos
-
-### Logs
-
-```bash
-# Ver logs en Docker Compose
-docker-compose logs -f ml-service
-
-# Ver logs de contenedor específico
-docker logs -f ml-service
-```
-
-## 🚀 Despliegue en Producción
-
-### Consideraciones de Seguridad
-
-1. **Variables de Entorno**: Configurar apropiadamente para producción
-2. **CORS**: Restringir orígenes permitidos
-3. **Debug**: Desactivar modo debug (`DEBUG=false`)
-4. **Secrets**: Usar gestores de secretos para datos sensibles
-
-### Configuración de Producción
-
-```bash
-# .env para producción
-ENVIRONMENT=production
-DEBUG=false
-HOST=0.0.0.0
-PORT=3001
-CORS_ORIGINS=https://tu-dominio.com
-```
+- `MODEL_PATH`: Ruta al modelo entrenado
+- `DEBUG`: Modo debug (true/false)
+- `HOST`: Host del servidor (default: 0.0.0.0)
+- `PORT`: Puerto del servidor (default: 8000)
 
 ## 🤝 Contribución
 
 1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/nueva-caracteristica`)
-3. Commit tus cambios (`git commit -am 'Agrega nueva característica'`)
-4. Push a la rama (`git push origin feature/nueva-caracteristica`)
-5. Crear un Pull Request
+2. Crear rama feature (`git checkout -b feature/AmazingFeature`)
+3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abrir Pull Request
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT - ver archivo [LICENSE](LICENSE) para detalles.
 
-## 📞 Soporte
+## 👥 Autores
 
-Si tienes problemas o preguntas:
+- **Tu Nombre** - _Trabajo inicial_ - [TuGitHub](https://github.com/tuusuario)
 
-1. Revisa la documentación
-2. Verifica los logs del servicio
-3. Crea un issue en el repositorio
-4. Contacta al equipo de desarrollo
+## 🙏 Agradecimientos
+
+- scikit-learn por el framework de ML
+- FastAPI por la API moderna
+- Strawberry GraphQL por la integración GraphQL

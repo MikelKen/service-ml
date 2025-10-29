@@ -1,251 +1,207 @@
 """
-Script de entrenamiento simplificado para el modelo de predicción de contratación
+Entrenador simple para el modelo de contratación con datos realistas
 """
-import os
-import sys
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import joblib
+import os
 import logging
 
-# Agregar path del proyecto
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-# Configurar logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def load_and_prepare_data(csv_path: str):
-    """Carga y prepara los datos de manera simple"""
-    logger.info(f"Cargando datos desde: {csv_path}")
+def load_and_prepare_data():
+    """Carga y prepara datos realistas"""
+    # Generar datos realistas si no existen
+    if not os.path.exists('datos_entrenamiento_realista.csv'):
+        logger.info("Generando datos realistas...")
+        os.system("python generate_realistic_data.py")
     
     # Cargar datos
-    df = pd.read_csv(csv_path)
-    logger.info(f"Datos cargados: {df.shape[0]} filas, {df.shape[1]} columnas")
-    
-    # Crear variable objetivo simple
-    target_mapping = {
-        'aceptado': 1,
-        'entrevista': 1,
-        'contratado': 1,
-        'rechazado': 0,
-        'en revisión': 0,
-        'pendiente': 0,
-        'descartado': 0
-    }
-    
-    df['contactado'] = df['estado'].str.lower().map(target_mapping).fillna(0)
-    logger.info(f"Distribución del target: {df['contactado'].value_counts().to_dict()}")
-    
-    # Limpiar y convertir datos básicos
-    df['años_experiencia'] = pd.to_numeric(df['años_experiencia'], errors='coerce').fillna(0)
-    df['salario'] = pd.to_numeric(df['salario'], errors='coerce').fillna(0)
-    
-    # Fechas básicas
-    df['fecha_postulacion'] = pd.to_datetime(df['fecha_postulacion'], errors='coerce')
-    df['fecha_publicacion'] = pd.to_datetime(df['fecha_publicacion'], errors='coerce')
-    
-    # Feature temporal simple
-    df['dias_desde_publicacion'] = (df['fecha_postulacion'] - df['fecha_publicacion']).dt.days.fillna(0)
+    df = pd.read_csv('datos_entrenamiento_realista.csv')
+    logger.info(f"Datos cargados: {df.shape[0]} registros")
     
     return df
 
-def create_simple_features(df):
-    """Crear features simples sin dependencias complejas"""
-    logger.info("Creando features simples...")
-    
+def create_features(df):
+    """Crea features mejoradas para el modelo"""
     features = pd.DataFrame()
     
     # Features numéricas básicas
     features['años_experiencia'] = df['años_experiencia']
     features['salario'] = df['salario']
-    features['dias_desde_publicacion'] = df['dias_desde_publicacion']
     
-    # Feature de coincidencia de habilidades simple
-    def simple_skill_match(row):
-        if pd.isna(row['habilidades']) or pd.isna(row['requisitos']):
-            return 0
-        
-        skills = set([s.strip().lower() for s in str(row['habilidades']).split(',') if s.strip()])
-        reqs = set([r.strip().lower() for r in str(row['requisitos']).split(',') if r.strip()])
-        
-        if not skills or not reqs:
-            return 0
-        
-        intersection = skills.intersection(reqs)
-        return len(intersection) / len(reqs)
+    # Feature de experiencia optimizada (penalizar extremos)
+    features['exp_optimal'] = df['años_experiencia'].apply(
+        lambda x: 1.0 if 3 <= x <= 12 else 0.8 if 1 <= x <= 2 or 13 <= x <= 15 else 0.5
+    )
     
-    features['skill_match'] = df.apply(simple_skill_match, axis=1)
-    
-    # Features categóricas simples (encoding ordinal)
+    # Educación numérica
     education_map = {'técnico': 1, 'licenciatura': 2, 'maestría': 3, 'doctorado': 4}
-    features['nivel_educacion_num'] = df['nivel_educacion'].str.lower().map(education_map).fillna(1)
+    features['nivel_educacion_num'] = df['nivel_educacion'].map(education_map)
     
-    # Feature de experiencia vs salario
-    features['salario_por_exp'] = df.apply(lambda row: row['salario'] / max(row['años_experiencia'], 1), axis=1)
+    # Calcular skill match mejorado
+    def calculate_skill_match(row):
+        skills = str(row['habilidades']).lower().split(', ')
+        reqs = str(row['requisitos']).lower().split(', ')
+        
+        skills_set = set([s.strip() for s in skills if s.strip()])
+        reqs_set = set([r.strip() for r in reqs if r.strip()])
+        
+        if not reqs_set:
+            return 0
+        
+        intersection = skills_set.intersection(reqs_set)
+        return len(intersection) / len(reqs_set)
     
-    # Features binarias simples
-    features['tiene_certificaciones'] = df['certificaciones'].apply(
-        lambda x: 1 if pd.notna(x) and str(x).lower() not in ['', 'sin certificacion', 'ninguna'] else 0
-    )
+    features['skill_match'] = df.apply(calculate_skill_match, axis=1)
     
-    # Feature de número de habilidades
+    # Features temporales
+    df['fecha_postulacion'] = pd.to_datetime(df['fecha_postulacion'])
+    df['fecha_publicacion'] = pd.to_datetime(df['fecha_publicacion'])
+    features['dias_desde_publicacion'] = (df['fecha_postulacion'] - df['fecha_publicacion']).dt.days
+    
+    # Certificaciones
+    features['tiene_certificaciones'] = (df['certificaciones'] != 'sin certificacion').astype(int)
+    
+    # Número de habilidades
     features['num_habilidades'] = df['habilidades'].apply(
-        lambda x: len(str(x).split(',')) if pd.notna(x) else 0
+        lambda x: len([s.strip() for s in str(x).split(',') if s.strip()])
     )
     
-    # Feature temporal
-    features['mes'] = df['fecha_postulacion'].dt.month.fillna(6)
+    # Salario vs experiencia (detectar candidatos muy caros o muy baratos)
+    features['salario_por_exp'] = df['salario'] / (df['años_experiencia'] + 1)  # +1 para evitar división por 0
     
-    logger.info(f"Features creadas: {features.shape[1]} columnas")
+    # Feature de salario normalizado por puesto
+    salary_by_job = df.groupby('titulo')['salario'].median()
+    features['salario_relativo'] = df.apply(
+        lambda row: row['salario'] / salary_by_job[row['titulo']], axis=1
+    )
     
+    # Mes de postulación (seasonality)
+    features['mes'] = df['fecha_postulacion'].dt.month
+    
+    # Días de la semana
+    features['dia_semana'] = df['fecha_postulacion'].dt.dayofweek
+    
+    logger.info(f"Features creadas: {list(features.columns)}")
     return features
 
-def train_simple_model(X, y):
-    """Entrenar modelo simple usando solo scikit-learn básico"""
-    logger.info("Entrenando modelo simple...")
+def train_model():
+    """Entrena el modelo con datos realistas"""
+    print("🚀 Iniciando entrenamiento con datos realistas...")
     
-    try:
-        from sklearn.model_selection import train_test_split
-        from sklearn.linear_model import LogisticRegression
-        from sklearn.ensemble import RandomForestClassifier
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.metrics import accuracy_score, classification_report
-        import joblib
-        
-        # Split de datos
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=y
-        )
-        
-        logger.info(f"Datos de entrenamiento: {X_train.shape[0]} muestras")
-        logger.info(f"Datos de prueba: {X_test.shape[0]} muestras")
-        
-        # Escalar datos
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-        
-        # Entrenar modelos simples
-        models = {
-            'logistic': LogisticRegression(random_state=42, max_iter=1000),
-            'random_forest': RandomForestClassifier(n_estimators=100, random_state=42)
-        }
-        
-        best_model = None
-        best_score = 0
-        best_name = ""
-        
-        for name, model in models.items():
-            logger.info(f"Entrenando {name}...")
-            
-            # Entrenar
-            model.fit(X_train_scaled, y_train)
-            
-            # Predecir
-            y_pred = model.predict(X_test_scaled)
-            accuracy = accuracy_score(y_test, y_pred)
-            
-            logger.info(f"{name} - Accuracy: {accuracy:.4f}")
-            
-            if accuracy > best_score:
-                best_score = accuracy
-                best_model = model
-                best_name = name
-        
-        logger.info(f"Mejor modelo: {best_name} (Accuracy: {best_score:.4f})")
-        
-        # Guardar modelo simple
-        model_artifacts = {
-            'model': best_model,
-            'scaler': scaler,
-            'model_name': best_name,
-            'accuracy': best_score,
-            'feature_names': X.columns.tolist(),
-            'training_date': datetime.now().isoformat()
-        }
-        
-        return model_artifacts
-        
-    except ImportError as e:
-        logger.error(f"Error importando sklearn: {e}")
-        logger.info("Por favor instale scikit-learn: pip install scikit-learn")
-        return None
-    except Exception as e:
-        logger.error(f"Error en entrenamiento: {e}")
-        return None
-
-def save_simple_model(artifacts, output_path):
-    """Guardar modelo simple"""
-    try:
-        import joblib
-        
-        # Crear directorio si no existe
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
-        # Guardar
-        joblib.dump(artifacts, output_path)
-        logger.info(f"Modelo guardado en: {output_path}")
-        
-        return True
-    except Exception as e:
-        logger.error(f"Error guardando modelo: {e}")
-        return False
-
-def main():
-    """Función principal simplificada"""
-    logger.info("=== Entrenamiento Simplificado del Modelo ===")
+    # Cargar datos
+    df = load_and_prepare_data()
     
-    # Verificar que existe el archivo de datos
-    data_path = "postulaciones_sinteticas_500.csv"
-    if not os.path.exists(data_path):
-        logger.error(f"Archivo de datos no encontrado: {data_path}")
-        return False
+    # Crear features
+    X = create_features(df)
+    y = df['contactado']
     
-    try:
-        # 1. Cargar y preparar datos
-        df = load_and_prepare_data(data_path)
-        
-        # 2. Crear features simples
-        X = create_simple_features(df)
-        y = df['contactado']
-        
-        # 3. Entrenar modelo
-        artifacts = train_simple_model(X, y)
-        
-        if artifacts is None:
-            logger.error("Error en el entrenamiento")
-            return False
-        
-        # 4. Guardar modelo
-        output_path = "trained_models/simple_hiring_model.pkl"
-        if save_simple_model(artifacts, output_path):
-            logger.info("✅ Entrenamiento completado exitosamente!")
-            
-            # Mostrar resumen
-            logger.info(f"Modelo: {artifacts['model_name']}")
-            logger.info(f"Accuracy: {artifacts['accuracy']:.4f}")
-            logger.info(f"Features utilizadas: {len(artifacts['feature_names'])}")
-            logger.info(f"Archivo guardado: {output_path}")
-            
-            return True
-        else:
-            return False
-        
-    except Exception as e:
-        logger.error(f"Error general: {e}")
-        return False
+    logger.info(f"Distribución del target: {y.value_counts().to_dict()}")
+    logger.info(f"Tasa de contratación: {y.mean():.2%}")
+    
+    # Dividir datos
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    
+    # Escalar features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # Entrenar modelo (RandomForest es más robusto para este tipo de datos)
+    model = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=10,
+        min_samples_split=10,
+        min_samples_leaf=5,
+        random_state=42,
+        class_weight='balanced'  # Para manejar desbalance
+    )
+    
+    logger.info("Entrenando modelo...")
+    model.fit(X_train_scaled, y_train)
+    
+    # Evaluar modelo
+    y_pred = model.predict(X_test_scaled)
+    y_pred_proba = model.predict_proba(X_test_scaled)[:, 1]
+    
+    accuracy = accuracy_score(y_test, y_pred)
+    logger.info(f"Accuracy: {accuracy:.3f}")
+    
+    print("\n📊 Reporte de clasificación:")
+    print(classification_report(y_test, y_pred))
+    
+    print("\n📈 Matriz de confusión:")
+    print(confusion_matrix(y_test, y_pred))
+    
+    # Feature importance
+    importance = pd.DataFrame({
+        'feature': X.columns,
+        'importance': model.feature_importances_
+    }).sort_values('importance', ascending=False)
+    
+    print("\n🎯 Importancia de features:")
+    print(importance.head(10))
+    
+    # Crear directorio para modelos
+    os.makedirs('trained_models', exist_ok=True)
+    
+    # Guardar modelo y artefactos
+    model_artifacts = {
+        'model': model,
+        'scaler': scaler,
+        'feature_names': list(X.columns),
+        'model_name': 'RandomForestClassifier',
+        'accuracy': accuracy,
+        'feature_importance': importance.to_dict('records')
+    }
+    
+    model_path = 'trained_models/simple_hiring_model.pkl'
+    joblib.dump(model_artifacts, model_path)
+    
+    print(f"\n✅ Modelo entrenado y guardado en: {model_path}")
+    print(f"📊 Accuracy final: {accuracy:.1%}")
+    
+    # Probar con ejemplos realistas
+    print("\n🧪 Probando con ejemplos:")
+    test_examples = [
+        # Candidato ideal
+        pd.DataFrame([{
+            'años_experiencia': 5, 'salario': 18000, 'exp_optimal': 1.0,
+            'nivel_educacion_num': 3, 'skill_match': 0.8, 'dias_desde_publicacion': 3,
+            'tiene_certificaciones': 1, 'num_habilidades': 5, 'salario_por_exp': 3600,
+            'salario_relativo': 1.0, 'mes': 6, 'dia_semana': 2
+        }]),
+        # Candidato sobrecalificado/caro
+        pd.DataFrame([{
+            'años_experiencia': 15, 'salario': 35000, 'exp_optimal': 0.5,
+            'nivel_educacion_num': 4, 'skill_match': 0.9, 'dias_desde_publicacion': 1,
+            'tiene_certificaciones': 1, 'num_habilidades': 8, 'salario_por_exp': 2333,
+            'salario_relativo': 1.8, 'mes': 6, 'dia_semana': 2
+        }]),
+        # Candidato junior sin experiencia
+        pd.DataFrame([{
+            'años_experiencia': 0, 'salario': 8000, 'exp_optimal': 0.5,
+            'nivel_educacion_num': 2, 'skill_match': 0.3, 'dias_desde_publicacion': 5,
+            'tiene_certificaciones': 0, 'num_habilidades': 3, 'salario_por_exp': 8000,
+            'salario_relativo': 0.7, 'mes': 6, 'dia_semana': 2
+        }])
+    ]
+    
+    for i, example in enumerate(test_examples):
+        example_scaled = scaler.transform(example)
+        prob = model.predict_proba(example_scaled)[0, 1]
+        pred = model.predict(example_scaled)[0]
+        print(f"Ejemplo {i+1}: Probabilidad = {prob:.1%}, Predicción = {pred}")
+    
+    return True
 
 if __name__ == "__main__":
-    success = main()
-    if success:
-        print("\n🎉 ¡Entrenamiento completado exitosamente!")
-        print("📁 Modelo guardado en: trained_models/simple_hiring_model.pkl")
-        print("🚀 Ahora puede probar predicciones")
-    else:
-        print("\n❌ Error durante el entrenamiento")
-        print("💡 Revise los logs arriba para diagnosticar el problema")
-        sys.exit(1)
+    train_model()

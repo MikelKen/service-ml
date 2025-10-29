@@ -191,6 +191,16 @@ checkpoints/
 *.h5
 *.joblib
 
+# Archivos de prueba y temporales
+demo_*.py
+demo_*.csv
+test_*.py
+validate_*.py
+*_temp.py
+*_backup.py
+postulaciones_sinteticas*.csv
+train_realistic.py
+
 # Configuration files with sensitive data
 config.ini
 config.yaml

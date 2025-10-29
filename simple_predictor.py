@@ -60,7 +60,15 @@ class SimpleHiringPredictor:
         
         features['años_experiencia'] = df['años_experiencia']
         features['salario'] = df['salario']
-        features['dias_desde_publicacion'] = df['dias_desde_publicacion']
+        
+        # Feature de experiencia optimizada (penalizar extremos)
+        anos_exp = features['años_experiencia'].iloc[0]
+        features['exp_optimal'] = 1.0 if 3 <= anos_exp <= 12 else 0.8 if 1 <= anos_exp <= 2 or 13 <= anos_exp <= 15 else 0.5
+        
+        # Nivel educativo
+        education_map = {'técnico': 1, 'licenciatura': 2, 'maestría': 3, 'doctorado': 4}
+        nivel_edu = str(data.get('nivel_educacion', 'licenciatura')).lower()
+        features['nivel_educacion_num'] = education_map.get(nivel_edu, 2)
         
         # Skill match simple
         skills = str(data.get('habilidades', '')).lower()
@@ -79,15 +87,7 @@ class SimpleHiringPredictor:
             skill_match = 0
         
         features['skill_match'] = skill_match
-        
-        # Nivel educativo
-        education_map = {'técnico': 1, 'licenciatura': 2, 'maestría': 3, 'doctorado': 4}
-        nivel_edu = str(data.get('nivel_educacion', 'licenciatura')).lower()
-        features['nivel_educacion_num'] = education_map.get(nivel_edu, 2)
-        
-        # Salario por experiencia
-        exp = max(features['años_experiencia'].iloc[0], 1)
-        features['salario_por_exp'] = features['salario'].iloc[0] / exp
+        features['dias_desde_publicacion'] = df['dias_desde_publicacion']
         
         # Certificaciones
         cert = str(data.get('certificaciones', '')).lower()
@@ -96,8 +96,16 @@ class SimpleHiringPredictor:
         # Número de habilidades
         features['num_habilidades'] = len([s.strip() for s in skills.split(',') if s.strip()]) if skills else 0
         
-        # Mes
+        # Salario por experiencia
+        exp = max(features['años_experiencia'].iloc[0], 1)
+        features['salario_por_exp'] = features['salario'].iloc[0] / exp
+        
+        # Salario relativo (usar un valor por defecto de 1.0 si no hay info del mercado)
+        features['salario_relativo'] = 1.0  # En un sistema real, esto vendría de datos de mercado
+        
+        # Mes y día de semana
         features['mes'] = df['fecha_postulacion'].dt.month.fillna(6).iloc[0]
+        features['dia_semana'] = df['fecha_postulacion'].dt.dayofweek.fillna(2).iloc[0]
         
         return features
     
