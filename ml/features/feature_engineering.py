@@ -291,7 +291,7 @@ if __name__ == "__main__":
     # Test del feature engineer
     from ml.data.preprocessing import preprocess_data
     
-    csv_path = "../../postulaciones_sinteticas_500.csv"
+    csv_path = "../../datos_entrenamiento_realista.csv"
     df, _ = preprocess_data(csv_path)
     
     features, engineer = create_features(df)

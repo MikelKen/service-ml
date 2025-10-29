@@ -61,7 +61,7 @@ class MLMutation:
         )
     
     @strawberry.mutation
-    async def train_model(self, data_path: str = "postulaciones_sinteticas_500.csv") -> TrainingStatus:
+    async def train_model(self, data_path: str = "datos_entrenamiento_realista.csv") -> TrainingStatus:
         """Inicia el entrenamiento del modelo de ML"""
         
         try:

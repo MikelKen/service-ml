@@ -72,7 +72,7 @@ class Mutation:
         industria: Optional[str] = None,
         titulo: str = "Desarrollador",
         descripcion: str = "Desarrollo de software",
-        salario: float = 10000,
+        salario: float = 1000,
         ubicacion: str = "Santa Cruz",
         requisitos: str = "Experiencia en desarrollo",
         fecha_postulacion: Optional[str] = None,
