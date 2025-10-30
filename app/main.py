@@ -6,12 +6,12 @@ import uvicorn
 
 from app.config.settings import settings
 from app.graphql.simple_ml import Query, Mutation
-from app.routers import health
+from app.routers import health, clustering
 
 # Create FastAPI app
 app = FastAPI(
     title="ML Hiring Service API",
-    description="Machine Learning microservice for hiring prediction and analytics",
+    description="Machine Learning microservice for hiring prediction and candidate clustering analytics",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -38,6 +38,9 @@ app.include_router(graphql_app, prefix="/graphql")
 # Add health check routes
 app.include_router(health.router, prefix="/api")
 
+# Add clustering routes
+app.include_router(clustering.router, prefix="/api")
+
 
 @app.get("/")
 async def root():
@@ -51,6 +54,7 @@ async def root():
             "graphql": "/graphql",
             "graphql_playground": "/graphql",
             "health": "/api/health",
+            "clustering": "/api/clustering",
             "docs": "/docs",
             "redoc": "/redoc"
         }
@@ -77,8 +81,11 @@ async def get_service_info():
         "features": [
             "Hiring probability prediction",
             "Candidate evaluation",
+            "Candidate clustering by profile similarity",
+            "Similar candidate search",
             "ML analytics",
-            "GraphQL API"
+            "GraphQL API",
+            "REST API"
         ],
         "technologies": [
             "FastAPI",

@@ -24,7 +24,7 @@ class MLQuery:
         # Convertir inputs a diccionarios
         application_data = {
             'nombre': prediction_input.application.nombre,
-            'años_experiencia': prediction_input.application.años_experiencia,
+            'años_experiencia': prediction_input.application.experience_years,
             'nivel_educacion': prediction_input.application.nivel_educacion,
             'habilidades': prediction_input.application.habilidades,
             'idiomas': prediction_input.application.idiomas,

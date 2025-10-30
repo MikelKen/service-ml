@@ -1,14 +1,50 @@
-# 🤖 Microservicio de ML para Predicción de Contratación
+# 🤖 ML Hiring Service - Microservicio de Machine Learning
 
-Sistema de Machine Learning que predice la probabilidad de que un candidato sea contactado por reclutadores, integrado con FastAPI + GraphQL.
+Sistema completo de Machine Learning que incluye **predicción de contratación** y **clustering de candidatos por similitud de perfil**, integrado con FastAPI + GraphQL.
 
-## 🚀 Características
+## 🚀 Características Principales
+
+### 1. Predicción de Contratación
 
 - **Predicción inteligente**: Modelo RandomForest que evalúa candidatos realísticamente
 - **API GraphQL**: Interfaz moderna para consultas y mutaciones
 - **Datos realistas**: Generación de datos sintéticos con lógica empresarial
 - **Validación integrada**: Ejemplos de prueba categorizados
-- **Dockerizado**: Listo para despliegue en contenedores
+
+### 2. **🆕 Clustering de Candidatos**
+
+- **Agrupación automática de candidatos por similitud de perfil**
+- **Múltiples algoritmos de clustering (K-Means, Jerárquico, DBSCAN)**
+- **Búsqueda de candidatos similares**
+- **Análisis de perfiles por clusters**
+- **Analíticas y estadísticas de clusters**
+- **Dataset realista con 50 candidatos**
+
+## 📊 Dataset de Candidatos para Clustering
+
+El sistema incluye un dataset realista (`candidatos_clustering_dataset.csv`) con **50 candidatos** que contiene:
+
+### Datos Personales
+
+- `id`, `nombre`, `edad`, `años_experiencia`, `nivel_educacion`
+- `area_especialidad`, `puesto_actual`, `ubicacion`
+
+### Habilidades y Competencias
+
+- `habilidades_tecnicas` (Python, Java, SQL, etc.)
+- `habilidades_blandas` (Liderazgo, Comunicación, etc.)
+- `idiomas`, `certificaciones`
+
+### Experiencia y Proyectos
+
+- `industria_experiencia`, `liderazgo_equipos`
+- `proyectos_completados`, `educacion_continua`
+- `redes_profesionales`
+
+### Preferencias Laborales
+
+- `salario_esperado`, `disponibilidad_viajar`
+- `modalidad_trabajo` (Presencial, Remoto, Híbrido)
 
 ## 📁 Estructura del Proyecto
 
