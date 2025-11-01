@@ -7,7 +7,7 @@ import logging
 
 from app.config.settings import settings
 from app.graphql.simple_ml import Query, Mutation
-from app.routers import health, clustering
+from app.routers import health, clustering, database
 from app.database.connection import init_database, close_database
 
 # Configure logging
@@ -47,6 +47,9 @@ app.include_router(health.router, prefix="/api")
 # Add clustering routes
 app.include_router(clustering.router, prefix="/api")
 
+# Add database query routes
+app.include_router(database.router, prefix="/api/db")
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -84,6 +87,14 @@ async def root():
             "graphql_playground": "/graphql",
             "health": "/api/health",
             "clustering": "/api/clustering",
+            "database_queries": "/api/db",
+            "database_status": "/api/db/db-status",
+            "empresas": "/api/db/empresas",
+            "ofertas": "/api/db/ofertas",
+            "postulaciones": "/api/db/postulaciones",
+            "entrevistas": "/api/db/entrevistas",
+            "evaluaciones": "/api/db/evaluaciones",
+            "estadisticas": "/api/db/estadisticas",
             "docs": "/docs",
             "redoc": "/redoc"
         }
