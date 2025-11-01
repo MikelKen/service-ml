@@ -3,10 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 import uvicorn
+import logging
 
 from app.config.settings import settings
 from app.graphql.simple_ml import Query, Mutation
 from app.routers import health, clustering
+from app.database.connection import init_database, close_database
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
@@ -42,6 +48,29 @@ app.include_router(health.router, prefix="/api")
 app.include_router(clustering.router, prefix="/api")
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    logger.info("🚀 Starting ML Hiring Service...")
+    
+    # Initialize database connection
+    db_connected = await init_database()
+    if db_connected:
+        logger.info("✅ Database connection established successfully!")
+    else:
+        logger.error("❌ Failed to connect to database!")
+    
+    logger.info("🎯 ML Hiring Service started successfully!")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up on shutdown"""
+    logger.info("🛑 Shutting down ML Hiring Service...")
+    await close_database()
+    logger.info("👋 ML Hiring Service shutdown complete!")
+
+
 @app.get("/")
 async def root():
     """Root endpoint"""
@@ -63,11 +92,19 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint with database status"""
+    from app.database.connection import db
+    
+    db_status = await db.test_connection()
+    
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status else "unhealthy",
         "service": "ml-hiring-service",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "database": {
+            "status": "connected" if db_status else "disconnected",
+            "type": "PostgreSQL"
+        }
     }
 
 

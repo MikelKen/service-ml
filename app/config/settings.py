@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     debug: bool = True
     environment: str = "development"
     
+    # Database configuration
+    database_url: str = "postgresql://neondb_owner:npg_5PdCLF6NrZni@ep-lucky-darkness-ah2vls5k-pooler.c-3.us-east-1.aws.neon.tech/service-erp-rrhh?sslmode=require&channel_binding=require"
+    
     # CORS configuration
     cors_origins: List[str] = ["*"]
     cors_methods: List[str] = ["*"]
