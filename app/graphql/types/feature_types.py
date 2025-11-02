@@ -18,6 +18,7 @@ class CandidateFeature:
     certificaciones: Optional[str] = None
     puesto_actual: Optional[str] = None
     oferta_id: Optional[str] = None
+    oferta_id: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
