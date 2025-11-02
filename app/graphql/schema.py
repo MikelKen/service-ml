@@ -49,6 +49,11 @@ class Query:
     async def predict_compatibility(self, input: CompatibilityPredictionInput) -> CompatibilityPrediction:
         return await ml_resolvers.predict_compatibility(input)
     
+    # Alias camelCase para compatibilidad
+    @strawberry.field(description="Predice compatibilidad entre candidato y oferta (camelCase alias)", name="predictCompatibility")
+    async def predict_compatibility_camel(self, input: CompatibilityPredictionInput) -> CompatibilityPrediction:
+        return await ml_resolvers.predict_compatibility(input)
+    
     @strawberry.field(description="Predice compatibilidad para múltiples pares candidato-oferta")
     async def predict_batch_compatibility(self, input: BatchCompatibilityInput) -> BatchCompatibilityResult:
         return await ml_resolvers.predict_batch_compatibility(input)

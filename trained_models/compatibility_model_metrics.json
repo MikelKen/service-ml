@@ -1,35 +1,35 @@
 {
-  "model_name": "random_forest",
+  "model_name": "gradient_boosting",
   "metrics": {
-    "accuracy": 0.625421822272216,
-    "precision": 0.5572614820443001,
-    "recall": 0.625421822272216,
-    "f1_score": 0.5663371573696353,
-    "roc_auc": 0.512942130766111,
+    "accuracy": 0.6631046119235096,
+    "precision": 0.5482925454763671,
+    "recall": 0.6631046119235096,
+    "f1_score": 0.536488794943598,
+    "roc_auc": 0.5002461915028354,
     "confusion_matrix": [
       [
-        1036,
-        149
+        1174,
+        11
       ],
       [
-        517,
-        76
+        588,
+        5
       ]
     ],
-    "cv_mean": 0.5002751661778209,
-    "cv_std": 0.007069801253729223
+    "cv_mean": 0.4782073066672702,
+    "cv_std": 0.013927947854253131
   },
   "feature_importance": {
-    "salary_per_experience": 0.16072752416122757,
-    "salary": 0.15551802111116414,
-    "current_position_encoded": 0.1381355412184606,
-    "years_experience": 0.11904273334458444,
-    "education_score": 0.052013260045548196,
-    "skills_count": 0.03217628490129312,
-    "languages_count": 0.020625581425060085,
-    "position_similarity": 0.01704743043312292,
-    "location_encoded": 0.01421799508895689,
-    "requirements_tfidf_40": 0.013591531715470196
+    "salary_per_experience": 0.31293373199629276,
+    "salary": 0.17672188164407715,
+    "current_position_encoded": 0.07433296395022805,
+    "years_experience": 0.03171574828929265,
+    "position_similarity": 0.02890096170391676,
+    "requirements_tfidf_45": 0.025893737228972483,
+    "requirements_tfidf_78": 0.01570668558984372,
+    "skills_tfidf_55": 0.015148033215546993,
+    "location_encoded": 0.014929117594409099,
+    "skills_tfidf_24": 0.014186537144859493
   },
-  "training_date": "2025-11-02T20:14:45.810197"
+  "training_date": "2025-11-02T17:26:30.143556"
 }

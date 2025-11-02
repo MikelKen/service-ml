@@ -224,21 +224,34 @@ class MongoDataPreprocessor:
                 if fit:
                     if feature not in self.label_encoders:
                         self.label_encoders[feature] = LabelEncoder()
-                    df[f'{feature}_encoded'] = self.label_encoders[feature].fit_transform(
-                        df[feature].fillna('unknown').astype(str)
-                    )
+                    
+                    # Asegurar que 'unknown' esté en los datos de entrenamiento
+                    values = df[feature].fillna('unknown').astype(str)
+                    if 'unknown' not in values.unique():
+                        # Agregar 'unknown' al conjunto de entrenamiento
+                        values = pd.concat([values, pd.Series(['unknown'])])
+                    
+                    df[f'{feature}_encoded'] = self.label_encoders[feature].fit_transform(values)[:len(df)]
                 else:
                     if feature in self.label_encoders:
                         # Para datos nuevos, manejar categorías no vistas
-                        unique_values = df[feature].fillna('unknown').astype(str).unique()
-                        known_values = set(self.label_encoders[feature].classes_)
-                        
                         df[feature] = df[feature].fillna('unknown').astype(str)
+                        
+                        # Mapear valores no conocidos a 'unknown'
+                        known_values = set(self.label_encoders[feature].classes_)
                         df[feature] = df[feature].apply(
                             lambda x: x if x in known_values else 'unknown'
                         )
                         
-                        df[f'{feature}_encoded'] = self.label_encoders[feature].transform(df[feature])
+                        try:
+                            df[f'{feature}_encoded'] = self.label_encoders[feature].transform(df[feature])
+                        except ValueError as e:
+                            logger.warning(f"Error encoding {feature}: {e}. Usando valor por defecto.")
+                            # Si aún hay problemas, asignar el valor de 'unknown'
+                            unknown_encoded = 0
+                            if 'unknown' in self.label_encoders[feature].classes_:
+                                unknown_encoded = self.label_encoders[feature].transform(['unknown'])[0]
+                            df[f'{feature}_encoded'] = unknown_encoded
                     else:
                         # Si no hay encoder, asignar 0
                         df[f'{feature}_encoded'] = 0
