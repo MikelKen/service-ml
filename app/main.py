@@ -8,9 +8,15 @@ import logging
 from app.config.settings import settings
 from app.graphql.schema import schema
 from app.config.connection import init_database, close_database
+from app.services.sync_service import auto_sync_service
 
 # Importar routers disponibles de forma segura
 from app.routers import health
+try:
+    from app.routers import sync  # router de sincronización
+except Exception:
+    sync = None
+    logging.getLogger(__name__).warning("Router opcional 'sync' no encontrado. Se omitirá su registro.")
 try:
     from app.routers import ml_database  # opcional
 except Exception:
@@ -59,6 +65,10 @@ app.include_router(graphql_app, prefix="/graphql")
 # Add health check routes
 app.include_router(health.router, prefix="/api")
 
+# Add sync routes
+if sync is not None:
+    app.include_router(sync.router, prefix="/api")
+
 # Add clustering routes (si el módulo existe)
 if clustering is not None:
     app.include_router(clustering.router, prefix="/api")
@@ -81,6 +91,9 @@ async def startup_event():
     db_connected = await init_database()
     if db_connected:
         logger.info("✅ Database connection established successfully!")
+        
+        # Iniciar servicio de sincronización automática
+        await auto_sync_service.start()
     else:
         logger.error("❌ Failed to connect to database!")
     
@@ -91,6 +104,10 @@ async def startup_event():
 async def shutdown_event():
     """Clean up on shutdown"""
     logger.info("🛑 Shutting down ML Hiring Service...")
+    
+    # Detener servicio de sincronización
+    await auto_sync_service.stop()
+    
     await close_database()
     logger.info("👋 ML Hiring Service shutdown complete!")
 
@@ -107,6 +124,10 @@ async def root():
             "graphql": "/graphql",
             "graphql_playground": "/graphql",
             "health": "/api/health",
+            "sync_status": "/api/sync/status",
+            "sync_force": "/api/sync/force-sync",
+            "sync_start": "/api/sync/start",
+            "sync_stop": "/api/sync/stop",
             "clustering": "/api/clustering",
             "database_queries": "/api/db",
             "ml_database": "/api/ml/database",
