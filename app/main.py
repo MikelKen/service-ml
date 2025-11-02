@@ -6,9 +6,9 @@ import uvicorn
 import logging
 
 from app.config.settings import settings
-from app.graphql.simple_ml import Query, Mutation
+from app.graphql.schema import schema
 from app.routers import health, clustering, database, ml_database
-from app.database.connection import init_database, close_database
+from app.config.connection import init_database, close_database
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -32,10 +32,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create GraphQL schema
-schema = strawberry.Schema(query=Query, mutation=Mutation)
-
-# Create GraphQL router
+# Create GraphQL schema - using the centralized schema
 graphql_app = GraphQLRouter(schema)
 
 # Add GraphQL endpoint
@@ -111,7 +108,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint with database status"""
-    from app.database.connection import db, mongodb
+    from app.config.connection import db, mongodb
     
     postgres_status = await db.test_connection()
     mongodb_status = await mongodb.test_connection()
