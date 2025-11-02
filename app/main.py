@@ -7,8 +7,26 @@ import logging
 
 from app.config.settings import settings
 from app.graphql.schema import schema
-from app.routers import health, clustering, database, ml_database
 from app.config.connection import init_database, close_database
+
+# Importar routers disponibles de forma segura
+from app.routers import health
+try:
+    from app.routers import ml_database  # opcional
+except Exception:
+    ml_database = None
+    logging.getLogger(__name__).warning("Router opcional 'ml_database' no encontrado. Se omitirá su registro.")
+try:
+    from app.routers import clustering  # opcional
+except Exception:  # ImportError u otros
+    clustering = None
+    logging.getLogger(__name__).warning("Router opcional 'clustering' no encontrado. Se omitirá su registro.")
+
+try:
+    from app.routers import database  # opcional
+except Exception:
+    database = None
+    logging.getLogger(__name__).warning("Router opcional 'database' no encontrado. Se omitirá su registro.")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -41,14 +59,17 @@ app.include_router(graphql_app, prefix="/graphql")
 # Add health check routes
 app.include_router(health.router, prefix="/api")
 
-# Add clustering routes
-app.include_router(clustering.router, prefix="/api")
+# Add clustering routes (si el módulo existe)
+if clustering is not None:
+    app.include_router(clustering.router, prefix="/api")
 
-# Add database query routes
-app.include_router(database.router, prefix="/api/db")
+# Add database query routes (si el módulo existe)
+if database is not None:
+    app.include_router(database.router, prefix="/api/db")
 
-# Add ML database routes
-app.include_router(ml_database.router)
+# Add ML database routes (si el módulo existe)
+if ml_database is not None:
+    app.include_router(ml_database.router)
 
 
 @app.on_event("startup")

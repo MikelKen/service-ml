@@ -127,7 +127,7 @@ class MongoDBConnection:
     
     def get_database(self):
         """Get MongoDB database instance"""
-        if not self.database:
+        if self.database is None:
             raise RuntimeError("MongoDB not connected. Call connect() first.")
         return self.database
     
