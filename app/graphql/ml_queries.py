@@ -9,7 +9,7 @@ from app.schemas.ml_schemas import (
 )
 from app.services.ml_service import (
     predict_hiring, get_model_info, get_training_status,
-    get_model_metrics, get_dataset_info
+    get_model_metrics, get_dataset_info, get_database_dataset_info
 )
 
 
@@ -92,6 +92,24 @@ class MLQuery:
             recall=metrics['recall'],
             f1_score=metrics['f1_score'],
             accuracy=metrics['accuracy']
+        )
+    
+    @strawberry.field
+    async def database_dataset_info(self) -> DatasetInfo:
+        """Obtiene información del dataset desde la base de datos"""
+        info = await get_database_dataset_info()
+        
+        return DatasetInfo(
+            total_records=info['total_records'],
+            positive_class_count=info['positive_class_count'],
+            negative_class_count=info['negative_class_count'],
+            class_balance_ratio=info['class_balance_ratio'],
+            last_updated=info['last_updated'],
+            source=info.get('source', 'database'),
+            companies_count=info.get('companies_count', 0),
+            job_offers_count=info.get('job_offers_count', 0),
+            avg_experience_years=info.get('avg_experience_years', 0.0),
+            avg_salary=info.get('avg_salary', 0.0)
         )
     
     @strawberry.field

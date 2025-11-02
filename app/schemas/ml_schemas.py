@@ -73,6 +73,7 @@ class BatchPredictionResult:
     successful_predictions: int
     failed_predictions: int
     predictions: List[PredictionResult]
+    error_message: Optional[str] = None
 
 
 @strawberry.input
@@ -135,6 +136,13 @@ class DatasetInfo:
     negative_class_count: int
     class_balance_ratio: float
     last_updated: Optional[str] = None
+    source: Optional[str] = None
+    companies_count: Optional[int] = None
+    job_offers_count: Optional[int] = None
+    avg_experience_years: Optional[float] = None
+    avg_salary: Optional[float] = None
+    education_levels: Optional[int] = None
+    industry_sectors: Optional[int] = None
 
 
 # ============== CLUSTERING SCHEMAS ==============

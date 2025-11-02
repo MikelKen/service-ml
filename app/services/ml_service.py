@@ -8,6 +8,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import asyncio
 import time
+import pandas as pd
 
 # Agregar path del proyecto
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -16,6 +17,7 @@ from ml.models.predictor import HiringPredictor
 from ml.data.preprocessing import preprocess_data
 from ml.features.feature_engineering import FeatureEngineer
 from ml.models.trainer import train_hiring_prediction_model
+from app.database.ml_queries import ml_db_queries
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -175,8 +177,70 @@ class MLService:
             'estimated_completion': None  # Se podría implementar estimación
         }
     
+    async def train_model_from_database_async(self) -> bool:
+        """Entrena el modelo usando datos directamente de la base de datos"""
+        if self.is_training:
+            raise ValueError("Ya hay un entrenamiento en progreso")
+        
+        self.is_training = True
+        self.training_progress = 0.0
+        
+        try:
+            logger.info("Iniciando entrenamiento con datos de la base de datos...")
+            
+            # 1. Obtener datos de la base de datos
+            logger.info("Obteniendo datos de entrenamiento de la base de datos...")
+            df = await ml_db_queries.export_training_data_to_dataframe()
+            
+            if df.empty:
+                logger.error("No se encontraron datos de entrenamiento en la base de datos")
+                return False
+            
+            logger.info(f"Se obtuvieron {len(df)} registros de la base de datos")
+            self.training_progress = 30.0
+            await asyncio.sleep(1)
+            
+            # 2. Verificar que tengamos la columna target
+            if 'target_contactado' not in df.columns:
+                logger.error("No se encontró la columna target_contactado en los datos")
+                return False
+            
+            # 3. Crear features
+            logger.info("Creando features desde datos de base de datos...")
+            feature_engineer = FeatureEngineer()
+            self.training_progress = 50.0
+            await asyncio.sleep(1)
+            
+            # 4. Entrenar modelo
+            logger.info("Entrenando modelo con datos de base de datos...")
+            trainer = train_hiring_prediction_model(df, feature_engineer)
+            self.training_progress = 80.0
+            await asyncio.sleep(1)
+            
+            # 5. Guardar modelo
+            logger.info("Guardando modelo...")
+            os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+            trainer.save_model(self.model_path, include_feature_engineer=True)
+            self.training_progress = 90.0
+            await asyncio.sleep(1)
+            
+            # 6. Recargar modelo
+            logger.info("Recargando modelo...")
+            self.load_model()
+            self.training_progress = 100.0
+            
+            logger.info("Entrenamiento con datos de base de datos completado exitosamente")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error durante entrenamiento con datos de base de datos: {str(e)}")
+            return False
+        
+        finally:
+            self.is_training = False
+            self.training_progress = 0.0
     async def train_model_async(self, data_path: str = "postulaciones_sinteticas_500.csv") -> bool:
-        """Entrena el modelo de forma asíncrona"""
+        """Entrena el modelo de forma asíncrona usando archivo CSV"""
         if self.is_training:
             raise ValueError("Ya hay un entrenamiento en progreso")
         
@@ -245,8 +309,57 @@ class MLService:
             'accuracy': 0.83
         }
     
+    async def get_database_dataset_info(self) -> Dict[str, Any]:
+        """Obtiene información del dataset desde la base de datos"""
+        try:
+            # Obtener estadísticas de features
+            stats = await ml_db_queries.get_feature_statistics()
+            
+            if not stats or 'general_stats' not in stats:
+                return {
+                    'total_records': 0,
+                    'positive_class_count': 0,
+                    'negative_class_count': 0,
+                    'class_balance_ratio': 0.0,
+                    'last_updated': None,
+                    'source': 'database'
+                }
+            
+            general_stats = stats['general_stats']
+            total_records = general_stats.get('total_postulaciones', 0)
+            contacted = general_stats.get('contacted_candidates', 0)
+            not_contacted = general_stats.get('not_contacted_candidates', 0)
+            
+            balance_ratio = contacted / not_contacted if not_contacted > 0 else 0
+            
+            return {
+                'total_records': total_records,
+                'positive_class_count': contacted,
+                'negative_class_count': not_contacted,
+                'class_balance_ratio': balance_ratio,
+                'companies_count': general_stats.get('total_empresas', 0),
+                'job_offers_count': general_stats.get('total_ofertas', 0),
+                'avg_experience_years': float(general_stats.get('avg_experiencia', 0)) if general_stats.get('avg_experiencia') else 0,
+                'avg_salary': float(general_stats.get('avg_salario', 0)) if general_stats.get('avg_salario') else 0,
+                'education_levels': len(stats.get('education_distribution', [])),
+                'industry_sectors': len(stats.get('sector_distribution', [])),
+                'last_updated': datetime.now().isoformat(),
+                'source': 'database'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo info del dataset desde base de datos: {str(e)}")
+            return {
+                'total_records': 0,
+                'positive_class_count': 0,
+                'negative_class_count': 0,
+                'class_balance_ratio': 0.0,
+                'last_updated': None,
+                'source': 'database',
+                'error': str(e)
+            }
     def get_dataset_info(self, data_path: str = "postulaciones_sinteticas_500.csv") -> Dict[str, Any]:
-        """Obtiene información del dataset"""
+        """Obtiene información del dataset desde archivo CSV"""
         try:
             df_processed, summary = preprocess_data(data_path)
             
@@ -264,7 +377,8 @@ class MLService:
                 'positive_class_count': positive_count,
                 'negative_class_count': negative_count,
                 'class_balance_ratio': balance_ratio,
-                'last_updated': datetime.now().isoformat()
+                'last_updated': datetime.now().isoformat(),
+                'source': 'csv_file'
             }
             
         except Exception as e:
@@ -274,8 +388,81 @@ class MLService:
                 'positive_class_count': 0,
                 'negative_class_count': 0,
                 'class_balance_ratio': 0.0,
-                'last_updated': None
+                'last_updated': None,
+                'source': 'csv_file',
+                'error': str(e)
             }
+
+
+    async def predict_for_new_applications(self, empresa_id: str = None, 
+                                          oferta_id: str = None) -> List[Dict[str, Any]]:
+        """
+        Realiza predicciones para nuevas postulaciones desde la base de datos
+        
+        Args:
+            empresa_id: ID de empresa para filtrar (opcional)
+            oferta_id: ID de oferta para filtrar (opcional)
+        """
+        if not self.is_model_loaded:
+            raise ValueError("Modelo no cargado. Entrene o cargue un modelo primero.")
+        
+        try:
+            # Obtener postulaciones desde la base de datos
+            postulaciones = await ml_db_queries.get_postulaciones_for_prediction(
+                empresa_id=empresa_id, 
+                oferta_id=oferta_id
+            )
+            
+            if not postulaciones:
+                return []
+            
+            predictions = []
+            
+            for postulacion in postulaciones:
+                try:
+                    # Preparar datos para predicción
+                    application_data = {
+                        'nombre': postulacion.get('candidato_nombre', ''),
+                        'anios_experiencia': postulacion.get('anios_experiencia', 0),
+                        'nivel_educacion': postulacion.get('nivel_educacion', ''),
+                        'habilidades': postulacion.get('habilidades', ''),
+                        'idiomas': postulacion.get('idiomas', ''),
+                        'certificaciones': postulacion.get('certificaciones', ''),
+                        'puesto_actual': postulacion.get('puesto_actual', '')
+                    }
+                    
+                    job_offer_data = {
+                        'titulo': postulacion.get('oferta_titulo', ''),
+                        'descripcion': postulacion.get('oferta_descripcion', ''),
+                        'salario': postulacion.get('salario', 0),
+                        'ubicacion': postulacion.get('ubicacion', ''),
+                        'requisitos': postulacion.get('requisitos', ''),
+                        'empresa_nombre': postulacion.get('empresa_nombre', ''),
+                        'empresa_rubro': postulacion.get('empresa_rubro', '')
+                    }
+                    
+                    # Realizar predicción
+                    prediction_result = self.predict_hiring_probability(
+                        application_data, job_offer_data
+                    )
+                    
+                    # Agregar información de contexto
+                    prediction_result['postulacion_id'] = postulacion.get('postulacion_id')
+                    prediction_result['candidato_nombre'] = postulacion.get('candidato_nombre')
+                    prediction_result['oferta_titulo'] = postulacion.get('oferta_titulo')
+                    prediction_result['empresa_nombre'] = postulacion.get('empresa_nombre')
+                    
+                    predictions.append(prediction_result)
+                    
+                except Exception as e:
+                    logger.error(f"Error prediciendo para postulación {postulacion.get('postulacion_id')}: {str(e)}")
+                    continue
+            
+            return predictions
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo predicciones para nuevas postulaciones: {str(e)}")
+            raise
 
 
 # Instancia global del servicio
@@ -294,10 +481,25 @@ def predict_hiring_batch(predictions_data: List[Dict[str, Any]]) -> Dict[str, An
 
 
 async def train_model(data_path: str = None) -> bool:
-    """Función de utilidad para entrenar modelo"""
+    """Función de utilidad para entrenar modelo desde archivo CSV"""
     if data_path is None:
         data_path = "postulaciones_sinteticas_500.csv"
     return await ml_service.train_model_async(data_path)
+
+
+async def train_model_from_database() -> bool:
+    """Función de utilidad para entrenar modelo desde base de datos"""
+    return await ml_service.train_model_from_database_async()
+
+
+async def get_database_dataset_info() -> Dict[str, Any]:
+    """Función de utilidad para obtener info del dataset desde base de datos"""
+    return await ml_service.get_database_dataset_info()
+
+
+async def predict_new_applications(empresa_id: str = None, oferta_id: str = None) -> List[Dict[str, Any]]:
+    """Función de utilidad para predecir nuevas postulaciones desde base de datos"""
+    return await ml_service.predict_for_new_applications(empresa_id, oferta_id)
 
 
 def get_model_info() -> Dict[str, Any]:

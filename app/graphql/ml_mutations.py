@@ -7,7 +7,8 @@ from app.schemas.ml_schemas import (
     BatchPredictionResult, TrainingStatus, PredictionInput, ModelInfo
 )
 from app.services.ml_service import (
-    predict_hiring_batch, train_model, ml_service
+    predict_hiring_batch, train_model, train_model_from_database, 
+    predict_new_applications, ml_service
 )
 
 
@@ -102,7 +103,80 @@ class MLMutation:
             )
     
     @strawberry.mutation
-    def reload_model(self) -> ModelInfo:
+    async def train_model_from_database(self) -> TrainingStatus:
+        """Inicia el entrenamiento del modelo usando datos de la base de datos"""
+        
+        try:
+            # Verificar si ya hay entrenamiento en progreso
+            current_status = ml_service.get_training_status()
+            if current_status['is_training']:
+                return TrainingStatus(
+                    is_training=True,
+                    progress=current_status['progress'],
+                    status_message="Ya hay un entrenamiento en progreso",
+                    estimated_completion=None
+                )
+            
+            # Iniciar entrenamiento asíncrono desde base de datos
+            success = await train_model_from_database()
+            
+            if success:
+                return TrainingStatus(
+                    is_training=False,
+                    progress=100.0,
+                    status_message="Entrenamiento desde base de datos completado exitosamente",
+                    estimated_completion=None
+                )
+            else:
+                return TrainingStatus(
+                    is_training=False,
+                    progress=0.0,
+                    status_message="Error durante el entrenamiento desde base de datos",
+                    estimated_completion=None
+                )
+                
+        except Exception as e:
+            return TrainingStatus(
+                is_training=False,
+                progress=0.0,
+                status_message=f"Error entrenando desde base de datos: {str(e)}",
+                estimated_completion=None
+            )
+    
+    @strawberry.mutation
+    async def predict_new_applications_batch(
+        self, 
+        empresa_id: str = None, 
+        oferta_id: str = None
+    ) -> BatchPredictionResult:
+        """Predice probabilidades para nuevas postulaciones desde la base de datos"""
+        
+        try:
+            predictions = await predict_new_applications(empresa_id, oferta_id)
+            
+            if not predictions:
+                return BatchPredictionResult(
+                    total_applications=0,
+                    successful_predictions=0,
+                    failed_predictions=0,
+                    predictions=[]
+                )
+            
+            return BatchPredictionResult(
+                total_applications=len(predictions),
+                successful_predictions=len(predictions),
+                failed_predictions=0,
+                predictions=predictions
+            )
+            
+        except Exception as e:
+            return BatchPredictionResult(
+                total_applications=0,
+                successful_predictions=0,
+                failed_predictions=1,
+                predictions=[],
+                error_message=f"Error prediciendo nuevas postulaciones: {str(e)}"
+            )
         """Recarga el modelo desde el archivo guardado"""
         
         try:
