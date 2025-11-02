@@ -15,8 +15,14 @@ from app.graphql.types.ml_types import (
     ModelFeatureImportance, PredictionExplanation, TrainingDataSummary,
     ModelPerformanceMetrics
 )
+from app.graphql.types.feature_types import (
+    CandidateFeature, JobOfferFeature, CompanyFeature,
+    CandidateFeatureList, JobOfferFeatureList, CompanyFeatureList,
+    FeatureQueryInput, FeatureCollectionInfo
+)
 from app.graphql.resolvers import erp_resolvers
 from app.graphql.resolvers import ml_resolvers
+from app.graphql.resolvers import feature_resolvers
 from app.graphql.mutations.ml_mutations import MLMutation
 
 
@@ -81,6 +87,46 @@ class Query:
         import json
         status = await ml_resolvers.get_model_status()
         return json.dumps(status, indent=2)
+    
+    # ==========================================
+    # NUEVAS CONSULTAS DE FEATURES MONGODB
+    # ==========================================
+    
+    @strawberry.field(description="Lista de candidatos con características desde MongoDB")
+    async def candidates_features(self, query: Optional[FeatureQueryInput] = None) -> CandidateFeatureList:
+        return await feature_resolvers.get_candidates_features(query)
+    
+    @strawberry.field(description="Lista de ofertas laborales con características desde MongoDB")
+    async def job_offers_features(self, query: Optional[FeatureQueryInput] = None) -> JobOfferFeatureList:
+        return await feature_resolvers.get_job_offers_features(query)
+    
+    @strawberry.field(description="Lista de empresas con características desde MongoDB")
+    async def companies_features(self, query: Optional[FeatureQueryInput] = None) -> CompanyFeatureList:
+        return await feature_resolvers.get_companies_features(query)
+    
+    @strawberry.field(description="Obtiene un candidato específico por ID")
+    async def candidate_by_id(self, candidate_id: str) -> Optional[CandidateFeature]:
+        return await feature_resolvers.get_candidate_by_id(candidate_id)
+    
+    @strawberry.field(description="Obtiene una oferta específica por ID")
+    async def job_offer_by_id(self, offer_id: str) -> Optional[JobOfferFeature]:
+        return await feature_resolvers.get_job_offer_by_id(offer_id)
+    
+    @strawberry.field(description="Obtiene una empresa específica por ID")
+    async def company_by_id(self, company_id: str) -> Optional[CompanyFeature]:
+        return await feature_resolvers.get_company_by_id(company_id)
+    
+    @strawberry.field(description="Información sobre una colección de features")
+    async def collection_info(self, collection_name: str) -> FeatureCollectionInfo:
+        return await feature_resolvers.get_collection_info(collection_name)
+    
+    @strawberry.field(description="Candidatos que aplicaron a una oferta específica")
+    async def candidates_by_offer(self, offer_id: str, limit: Optional[int] = 10) -> List[CandidateFeature]:
+        return await feature_resolvers.get_candidates_by_offer_id(offer_id, limit or 10)
+    
+    @strawberry.field(description="Ofertas de una empresa específica")
+    async def offers_by_company(self, company_id: str, limit: Optional[int] = 10) -> List[JobOfferFeature]:
+        return await feature_resolvers.get_offers_by_company_id(company_id, limit or 10)
 
 
 @strawberry.type
