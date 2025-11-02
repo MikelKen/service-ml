@@ -11,6 +11,7 @@ from app.graphql.types.erp_types import (
 )
 from app.graphql.types.ml_types import (
     CompatibilityPredictionInput, BatchCompatibilityInput, TopCandidatesInput,
+    CustomCompatibilityPredictionInput,
     CompatibilityPrediction, BatchCompatibilityResult, ModelInfo,
     ModelFeatureImportance, PredictionExplanation, TrainingDataSummary,
     ModelPerformanceMetrics
@@ -53,6 +54,15 @@ class Query:
     @strawberry.field(description="Predice compatibilidad entre candidato y oferta (camelCase alias)", name="predictCompatibility")
     async def predict_compatibility_camel(self, input: CompatibilityPredictionInput) -> CompatibilityPrediction:
         return await ml_resolvers.predict_compatibility(input)
+    
+    @strawberry.field(description="Predice compatibilidad con datos personalizados (sin BD)")
+    async def predict_custom_compatibility(self, input: CustomCompatibilityPredictionInput) -> CompatibilityPrediction:
+        return await ml_resolvers.predict_custom_compatibility(input)
+    
+    # Alias camelCase para predicción personalizada
+    @strawberry.field(description="Predice compatibilidad con datos personalizados (camelCase alias)", name="predictCustomCompatibility")
+    async def predict_custom_compatibility_camel(self, input: CustomCompatibilityPredictionInput) -> CompatibilityPrediction:
+        return await ml_resolvers.predict_custom_compatibility(input)
     
     @strawberry.field(description="Predice compatibilidad para múltiples pares candidato-oferta")
     async def predict_batch_compatibility(self, input: BatchCompatibilityInput) -> BatchCompatibilityResult:

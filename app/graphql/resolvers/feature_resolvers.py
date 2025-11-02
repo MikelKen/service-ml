@@ -66,9 +66,7 @@ async def get_candidates_features(query_input: Optional[FeatureQueryInput] = Non
         query_input = FeatureQueryInput()
     
     try:
-        from app.config.mongodb_connection import get_mongodb_sync
-        db = get_mongodb_sync()
-        collection = db["candidates_features"]
+        collection = get_collection_sync("candidates_features")
         
         # Construir filtro de búsqueda
         filter_query = {}
@@ -112,9 +110,7 @@ async def get_job_offers_features(query_input: Optional[FeatureQueryInput] = Non
         query_input = FeatureQueryInput()
     
     try:
-        from app.config.mongodb_connection import get_mongodb_sync
-        db = get_mongodb_sync()
-        collection = db["job_offers_features"]
+        collection = get_collection_sync("job_offers_features")
         
         # Construir filtro de búsqueda
         filter_query = {}

@@ -7,6 +7,33 @@ from datetime import datetime
 
 
 @strawberry.input
+class CustomCandidateData:
+    """Datos personalizados de un candidato para predicción"""
+    anios_experiencia: int
+    nivel_educacion: str
+    habilidades: str
+    idiomas: Optional[str] = ""
+    certificaciones: Optional[str] = ""
+    puesto_actual: Optional[str] = ""
+
+
+@strawberry.input
+class CustomJobOfferData:
+    """Datos personalizados de una oferta laboral para predicción"""
+    titulo: str
+    salario: float
+    ubicacion: str
+    requisitos: str
+
+
+@strawberry.input
+class CustomCompatibilityPredictionInput:
+    """Input para predicción con datos personalizados (no desde BD)"""
+    candidate_data: CustomCandidateData
+    offer_data: CustomJobOfferData
+
+
+@strawberry.input
 class CompatibilityPredictionInput:
     """Input para predicción de compatibilidad candidato-oferta"""
     candidate_id: str
@@ -28,15 +55,33 @@ class TopCandidatesInput:
 
 @strawberry.type
 class CompatibilityPrediction:
-    """Resultado de predicción de compatibilidad"""
+    """Resultado detallado de predicción de compatibilidad"""
     candidate_id: str
     offer_id: str
     probability: float
     prediction: bool
     confidence: str
+    
+    # Información descriptiva adicional
+    probability_percentage: Optional[str] = None
+    compatibility_level: Optional[str] = None
+    recommendation: Optional[str] = None
+    decision_factors: Optional[str] = None
+    
+    # Análisis detallado
+    strengths: Optional[List[str]] = None
+    weaknesses: Optional[List[str]] = None
+    suggestions: Optional[List[str]] = None
+    
+    # Información técnica
     ranking: Optional[int] = None
     model_used: Optional[str] = None
     prediction_date: Optional[str] = None
+    confidence_score: Optional[float] = None
+    
+    # Meta información
+    summary: Optional[str] = None
+    detailed_analysis: Optional[str] = None
     error: Optional[str] = None
 
 
