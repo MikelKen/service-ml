@@ -17,7 +17,20 @@ class Settings(BaseSettings):
     environment: str = "development"
     
     # Database configuration
-    database_url: str = "postgresql://neondb_owner:npg_5PdCLF6NrZni@ep-lucky-darkness-ah2vls5k-pooler.c-3.us-east-1.aws.neon.tech/service-erp-rrhh?sslmode=require&channel_binding=require"
+    db_url_postgres: str = ""
+    db_url_mongodb: str = ""
+    mongodb_username: str = ""
+    mongodb_password: str = ""
+    mongodb_host: str = ""
+    mongodb_database: str = ""
+    
+    @property
+    def database_url(self) -> str:
+        return self.db_url_postgres
+    
+    @property
+    def mongodb_url(self) -> str:
+        return self.db_url_mongodb
     
     # CORS configuration
     cors_origins: List[str] = ["*"]

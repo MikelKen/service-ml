@@ -104,17 +104,24 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint with database status"""
-    from app.database.connection import db
+    from app.database.connection import db, mongodb
     
-    db_status = await db.test_connection()
+    postgres_status = await db.test_connection()
+    mongodb_status = await mongodb.test_connection()
     
     return {
-        "status": "healthy" if db_status else "unhealthy",
+        "status": "healthy" if (postgres_status and mongodb_status) else "unhealthy",
         "service": "ml-hiring-service",
         "version": "1.0.0",
-        "database": {
-            "status": "connected" if db_status else "disconnected",
-            "type": "PostgreSQL"
+        "databases": {
+            "postgresql": {
+                "status": "connected" if postgres_status else "disconnected",
+                "type": "PostgreSQL"
+            },
+            "mongodb": {
+                "status": "connected" if mongodb_status else "disconnected",
+                "type": "MongoDB"
+            }
         }
     }
 
