@@ -1,14 +1,172 @@
 """
-Tipos base de GraphQL para Machine Learning
+Tipos de GraphQL para Machine Learning - Sistema de Compatibilidad
 """
 import strawberry
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 
+@strawberry.input
+class CompatibilityPredictionInput:
+    """Input para predicción de compatibilidad candidato-oferta"""
+    candidate_id: str
+    offer_id: str
+
+
+@strawberry.input
+class BatchCompatibilityInput:
+    """Input para predicción batch de compatibilidad"""
+    pairs: List[CompatibilityPredictionInput]
+
+
+@strawberry.input
+class TopCandidatesInput:
+    """Input para obtener top candidatos para una oferta"""
+    offer_id: str
+    top_n: Optional[int] = 10
+
+
+@strawberry.type
+class CompatibilityPrediction:
+    """Resultado de predicción de compatibilidad"""
+    candidate_id: str
+    offer_id: str
+    probability: float
+    prediction: bool
+    confidence: str
+    ranking: Optional[int] = None
+    model_used: Optional[str] = None
+    prediction_date: Optional[str] = None
+    error: Optional[str] = None
+
+
+@strawberry.type
+class BatchCompatibilityResult:
+    """Resultado de predicción batch"""
+    predictions: List[CompatibilityPrediction]
+    total_processed: int
+    success_count: int
+    error_count: int
+    processing_time: Optional[float] = None
+
+
+@strawberry.type
+class TrainingMetrics:
+    """Métricas de entrenamiento"""
+    accuracy: Optional[float] = None
+    precision: Optional[float] = None
+    recall: Optional[float] = None
+    f1_score: Optional[float] = None
+    roc_auc: Optional[float] = None
+
+
+@strawberry.type
+class DataSummary:
+    """Resumen de datos de entrenamiento"""
+    total_samples: Optional[int] = None
+    positive_samples: Optional[int] = None
+    negative_samples: Optional[int] = None
+    features_count: Optional[int] = None
+
+
+@strawberry.type
+class ModelTrainingResult:
+    """Resultado del entrenamiento de modelo"""
+    success: bool
+    message: str
+    best_model: Optional[str] = None
+    metrics: Optional[TrainingMetrics] = None
+    training_time: Optional[float] = None
+    data_summary: Optional[DataSummary] = None
+
+
+@strawberry.type
+class ModelMetrics:
+    """Métricas del modelo"""
+    accuracy: Optional[float] = None
+    precision: Optional[float] = None
+    recall: Optional[float] = None
+    f1_score: Optional[float] = None
+
+
+@strawberry.type
+class ModelInfo:
+    """Información del modelo ML"""
+    model_name: Optional[str] = None
+    model_type: Optional[str] = None
+    is_loaded: bool = False
+    training_date: Optional[str] = None
+    metrics: Optional[ModelMetrics] = None
+    feature_importance_count: Optional[int] = None
+    top_features: Optional[List[str]] = None
+
+
+@strawberry.type
+class FeatureImportance:
+    """Importancia de features del modelo"""
+    feature_name: str
+    importance: float
+
+
+@strawberry.type
+class ModelFeatureImportance:
+    """Lista de importancia de features"""
+    features: List[FeatureImportance]
+    total_features: int
+
+
+@strawberry.type
+class PredictionFactors:
+    """Factores de predicción"""
+    experience_match: Optional[float] = None
+    skills_overlap: Optional[float] = None
+    education_fit: Optional[float] = None
+    location_match: Optional[float] = None
+
+
+@strawberry.type
+class PredictionExplanation:
+    """Explicación detallada de una predicción"""
+    prediction: CompatibilityPrediction
+    key_factors: PredictionFactors
+    feature_importance: List[FeatureImportance]
+    recommendation: str
+
+
+@strawberry.type
+class TrainingDataSummary:
+    """Resumen de datos de entrenamiento"""
+    total_records: int
+    positive_samples: int
+    negative_samples: int
+    features_count: int
+    data_quality_score: Optional[float] = None
+
+
+@strawberry.type
+class ModelPerformanceMetrics:
+    """Métricas de rendimiento del modelo"""
+    accuracy: Optional[float] = None
+    precision: Optional[float] = None
+    recall: Optional[float] = None
+    f1_score: Optional[float] = None
+    roc_auc: Optional[float] = None
+    confusion_matrix: Optional[List[List[int]]] = None
+
+
+@strawberry.input
+class TrainingConfigInput:
+    """Configuración para entrenamiento de modelo"""
+    positive_samples_ratio: Optional[float] = 0.3
+    negative_samples_multiplier: Optional[int] = 2
+    enable_hyperparameter_tuning: Optional[bool] = False
+    cross_validation_folds: Optional[int] = 5
+
+
+# Tipos legacy mantenidos para compatibilidad
 @strawberry.type
 class ApplicationInput:
-    """Input de datos de postulación"""
+    """Input de datos de postulación (legacy)"""
     nombre: str
     experience_years: int
     nivel_educacion: str
@@ -23,7 +181,7 @@ class ApplicationInput:
 
 @strawberry.type
 class JobOfferInput:
-    """Input de datos de oferta laboral"""
+    """Input de datos de oferta laboral (legacy)"""
     titulo: str
     descripcion: str
     salario: float
@@ -34,40 +192,36 @@ class JobOfferInput:
 
 @strawberry.input
 class PredictionInput:
-    """Input completo para predicción"""
+    """Input completo para predicción (legacy)"""
     application: ApplicationInput
     job_offer: JobOfferInput
 
 
 @strawberry.type
+class MetadataInfo:
+    """Información de metadatos"""
+    model_version: Optional[str] = None
+    features_used: Optional[int] = None
+    processing_time_ms: Optional[float] = None
+
+
+@strawberry.type
 class PredictionResult:
-    """Resultado de predicción individual"""
+    """Resultado de predicción individual (legacy)"""
     probability: float
     prediction: bool
     confidence: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[MetadataInfo] = None
 
 
 @strawberry.type
 class BatchPredictionResult:
-    """Resultado de predicción en lote"""
+    """Resultado de predicción en lote (legacy)"""
     predictions: List[PredictionResult]
     total_processed: int
     success_count: int
     error_count: int
     processing_time: float
-
-
-@strawberry.type
-class ModelInfo:
-    """Información del modelo ML"""
-    model_name: str
-    model_type: str
-    version: str
-    training_date: Optional[datetime] = None
-    performance_metrics: Optional[Dict[str, float]] = None
-    features_used: Optional[List[str]] = None
-    is_loaded: bool = False
 
 
 @strawberry.type
@@ -81,15 +235,25 @@ class TrainingStatus:
 
 
 @strawberry.type
-class ModelMetrics:
-    """Métricas de rendimiento del modelo"""
-    accuracy: float
-    precision: float
-    recall: float
-    f1_score: float
-    roc_auc: float
-    confusion_matrix: List[List[int]]
-    feature_importance: Optional[Dict[str, float]] = None
+class TargetDistribution:
+    """Distribución del target"""
+    positive: int
+    negative: int
+
+
+@strawberry.type
+class MissingValues:
+    """Valores faltantes por campo"""
+    total_missing: int
+    fields_with_missing: List[str]
+
+
+@strawberry.type
+class DataTypes:
+    """Tipos de datos"""
+    numeric_fields: List[str]
+    text_fields: List[str]
+    date_fields: List[str]
 
 
 @strawberry.type
@@ -97,7 +261,7 @@ class DatasetInfo:
     """Información del dataset"""
     total_records: int
     features_count: int
-    target_distribution: Dict[str, int]
-    missing_values: Dict[str, int]
-    data_types: Dict[str, str]
+    target_distribution: TargetDistribution
+    missing_values: MissingValues
+    data_types: DataTypes
     last_updated: Optional[datetime] = None

@@ -44,25 +44,25 @@ class MongoDBConnection:
     
     async def disconnect(self):
         """Close async connection"""
-        if self.client:
+        if self.client is not None:
             self.client.close()
             logger.info("Disconnected from MongoDB (async)")
     
     def disconnect_sync(self):
         """Close sync connection"""
-        if self.sync_client:
+        if self.sync_client is not None:
             self.sync_client.close()
             logger.info("Disconnected from MongoDB (sync)")
     
     def get_collection(self, collection_name: str):
         """Get async collection"""
-        if not self.database:
+        if self.database is None:
             raise Exception("Database not connected. Call connect() first.")
         return self.database[collection_name]
     
     def get_collection_sync(self, collection_name: str):
         """Get sync collection"""
-        if not self.sync_database:
+        if self.sync_database is None:
             raise Exception("Database not connected. Call connect_sync() first.")
         return self.sync_database[collection_name]
 
@@ -72,13 +72,13 @@ mongodb_connection = MongoDBConnection()
 # Convenience functions
 async def get_mongodb():
     """Get MongoDB async connection"""
-    if not mongodb_connection.database:
+    if mongodb_connection.database is None:
         await mongodb_connection.connect()
     return mongodb_connection.database
 
 def get_mongodb_sync():
     """Get MongoDB sync connection"""
-    if not mongodb_connection.sync_database:
+    if mongodb_connection.sync_database is None:
         mongodb_connection.connect_sync()
     return mongodb_connection.sync_database
 
