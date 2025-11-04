@@ -182,12 +182,12 @@ logs/
 uploads/
 downloads/
 data/
-models/
+# models/
 checkpoints/
 
 # ML specific
 *.pkl
-*.model
+# *.model
 *.h5
 *.joblib
 
