@@ -181,7 +181,7 @@ logs/
 # Application specific
 uploads/
 downloads/
-data/
+# data/
 # models/
 checkpoints/
 
