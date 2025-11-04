@@ -330,4 +330,44 @@ Puedes mezclar y combinar campos según tus necesidades:
 - **Documentación:** Todos los campos técnicos
 - **Feedback:** Campos orientados a mejora
 
-**¡Tu sistema ML está listo para cualquier escenario de reclutamiento!** ✨
+## 🎯 **PRÓXIMOS PASOS RECOMENDADOS**
+
+1. **Probar con diferentes candidatos/ofertas**:
+
+   ```graphql
+   # Usar otros IDs de tu base de datos
+   query {
+     predictCompatibility(input: { candidateId: "OTRO_ID", offerId: "OTRA_OFERTA" }) {
+       probability
+       prediction
+       confidence
+     }
+   }
+   ```
+
+2. **Encontrar mejores matches**:
+
+   ```graphql
+   query {
+     getTopCandidatesForOffer(input: { offerId: "TU_OFERTA_ID", topN: 10 }) {
+       candidateId
+       probability
+       ranking
+     }
+   }
+   ```
+
+3. **Analizar factores de decisión**:
+   ```graphql
+   query {
+     explainPrediction(candidateId: "ID", offerId: "ID") {
+       recommendation
+       keyFactors {
+         skillsOverlap
+         experienceMatch
+       }
+     }
+   }
+   ```
+
+---

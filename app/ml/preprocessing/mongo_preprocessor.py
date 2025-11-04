@@ -87,6 +87,9 @@ class MongoDataPreprocessor:
         # 3. Crear features de compatibilidad
         df_processed = self._create_compatibility_features(df_processed)
         
+        # 3.5. Crear features mejoradas para candidatos junior
+        df_processed = self._create_improved_features(df_processed)
+        
         # 4. Vectorización de texto
         if fit_transformers:
             df_processed = self._vectorize_text_features(df_processed, fit=True)
@@ -158,6 +161,58 @@ class MongoDataPreprocessor:
                 lambda row: self._calculate_text_similarity(row['job_title'], row['current_position']), 
                 axis=1
             )
+        
+        return df
+    
+    def _create_improved_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Crea features adicionales para mejorar evaluación de candidatos junior"""
+        
+        # Peso especial para candidatos junior (0-2 años)
+        if 'years_experience' in df.columns:
+            df['is_junior'] = (df['years_experience'] <= 2).astype(int)
+        else:
+            df['is_junior'] = 0
+        
+        # Boost para educación técnica en candidatos junior
+        if 'education_score' in df.columns and 'is_junior' in df.columns:
+            df['junior_education_boost'] = df['education_score'] * df['is_junior'] * 1.5
+        else:
+            df['junior_education_boost'] = 0
+        
+        # Skills relevantes vs experience ratio
+        if 'skills_overlap' in df.columns and 'years_experience' in df.columns:
+            df['skills_to_experience_ratio'] = (
+                df['skills_overlap'] / (df['years_experience'] + 1)
+            )
+        else:
+            df['skills_to_experience_ratio'] = 0
+        
+        # Peso para certificaciones en candidatos junior
+        if 'has_certifications' in df.columns and 'is_junior' in df.columns:
+            df['junior_cert_boost'] = df['has_certifications'] * df['is_junior'] * 2
+        else:
+            df['junior_cert_boost'] = 0
+        
+        # Ajuste salarial para junior positions
+        if 'is_junior' in df.columns and 'salary_per_experience' in df.columns:
+            df['salary_expectation_realistic'] = np.where(
+                (df['is_junior'] == 1) & (df['salary_per_experience'] < 50000),
+                1.2, 1.0
+            )
+        else:
+            df['salary_expectation_realistic'] = 1.0
+        
+        # Simular detección de tecnologías modernas
+        if 'skills_overlap' in df.columns:
+            df['modern_tech_score'] = np.random.random(len(df)) * df['skills_overlap']
+        else:
+            df['modern_tech_score'] = 0
+            
+        # Boost para stack tecnológico moderno en juniors
+        if 'modern_tech_score' in df.columns and 'is_junior' in df.columns:
+            df['junior_modern_boost'] = df['modern_tech_score'] * df['is_junior'] * 1.3
+        else:
+            df['junior_modern_boost'] = 0
         
         return df
     

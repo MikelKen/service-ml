@@ -108,17 +108,20 @@ async def predict_custom_compatibility(input_data: CustomCompatibilityPrediction
             input_data.candidate_data, input_data.offer_data
         )
         
+        # Usar probabilidad ajustada si está disponible
+        final_probability = analysis.get('adjusted_probability', probability)
+        
         return CompatibilityPrediction(
             candidate_id='custom_candidate',
             offer_id='custom_offer',
-            probability=float(probability),
-            prediction=bool(prediction),
+            probability=float(final_probability),
+            prediction=bool(final_probability >= 0.5),
             confidence=confidence,
             model_used=compatibility_predictor.model_name,
             prediction_date=datetime.now().isoformat(),
             
             # Información descriptiva adicional
-            probability_percentage=f"{probability*100:.2f}%",
+            probability_percentage=f"{final_probability*100:.2f}%",
             compatibility_level=analysis['compatibility_level'],
             recommendation=analysis['recommendation'],
             decision_factors=analysis['decision_factors'],
@@ -129,7 +132,7 @@ async def predict_custom_compatibility(input_data: CustomCompatibilityPrediction
             suggestions=analysis['suggestions'],
             
             # Información técnica
-            confidence_score=float(probability),
+            confidence_score=float(final_probability),
             summary=analysis['summary'],
             detailed_analysis=analysis['detailed_analysis']
         )
@@ -149,115 +152,268 @@ async def predict_custom_compatibility(input_data: CustomCompatibilityPrediction
 
 
 def _generate_detailed_analysis(probability, prediction, confidence, candidate_data, offer_data):
-    """Genera análisis descriptivo detallado de la predicción"""
+    """Genera análisis descriptivo detallado con lógica mejorada para candidatos junior"""
     
-    # Determinar nivel de compatibilidad
-    if probability >= 0.7:
+    # Análisis básico del candidato
+    years_exp = candidate_data.anios_experiencia
+    education = candidate_data.nivel_educacion.lower()
+    skills = candidate_data.habilidades.lower()
+    certifications = candidate_data.certificaciones
+    languages = candidate_data.idiomas.lower() if candidate_data.idiomas else ''
+    current_position = candidate_data.puesto_actual.lower() if candidate_data.puesto_actual else ''
+    
+    # Análisis de la oferta
+    job_title = offer_data.titulo.lower()
+    requirements = offer_data.requisitos.lower()
+    salary = offer_data.salario
+    
+    # Factores de análisis mejorados
+    is_junior = years_exp <= 2
+    has_technical_education = any(word in education for word in ['sistem', 'informatic', 'computac', 'software', 'ingenier'])
+    has_certifications = certifications and certifications.lower() not in ['', 'sin certificacion', 'ninguna']
+    has_relevant_skills = any(skill in skills for skill in ['python', 'javascript', 'java', 'react', 'node', 'django', 'spring'])
+    is_junior_position = 'junior' in job_title or 'junior' in requirements
+    has_language_advantage = 'inglés' in languages or 'english' in languages
+    
+    # Lógica mejorada para TODOS los candidatos (no solo junior)
+    adjusted_probability = probability
+    applied_bonuses = []
+    
+    # === BONIFICACIONES GENERALES ===
+    
+    # 1. Educación técnica alineada
+    if has_technical_education:
+        bonus = 0.25  # +25% por educación técnica relevante
+        adjusted_probability += bonus
+        applied_bonuses.append(f"Educación técnica relevante (+{bonus*100:.0f}%)")
+    
+    # 2. Skills altamente relevantes
+    if has_relevant_skills:
+        # Contar skills relevantes
+        relevant_skills_count = sum(1 for skill in ['python', 'javascript', 'java', 'react', 'node', 'django', 'spring', 'angular', 'php', 'laravel', '.net', 'c#'] if skill in skills)
+        if relevant_skills_count >= 3:
+            bonus = 0.30  # +30% por múltiples skills relevantes
+            adjusted_probability += bonus
+            applied_bonuses.append(f"Stack tecnológico alineado (+{bonus*100:.0f}%)")
+        elif relevant_skills_count >= 1:
+            bonus = 0.15  # +15% por algunas skills relevantes
+            adjusted_probability += bonus
+            applied_bonuses.append(f"Tecnologías relevantes (+{bonus*100:.0f}%)")
+    
+    # 3. Experiencia apropiada para el nivel
+    experience_bonus = 0
+    if 'senior' in job_title and years_exp >= 5:
+        experience_bonus = 0.25  # +25% senior con experiencia senior
+        applied_bonuses.append(f"Experiencia senior apropiada (+{experience_bonus*100:.0f}%)")
+    elif 'junior' in job_title and years_exp <= 3:
+        experience_bonus = 0.20  # +20% junior con experiencia apropiada
+        applied_bonuses.append(f"Experiencia junior apropiada (+{experience_bonus*100:.0f}%)")
+    elif not 'senior' in job_title and not 'junior' in job_title and 2 <= years_exp <= 7:
+        experience_bonus = 0.15  # +15% experiencia media apropiada
+        applied_bonuses.append(f"Experiencia media apropiada (+{experience_bonus*100:.0f}%)")
+    
+    adjusted_probability += experience_bonus
+    
+    # 4. Certificaciones relevantes
+    if has_certifications:
+        # Bonus extra si las certificaciones son muy relevantes
+        cert_keywords = ['aws', 'azure', 'react', 'angular', 'java', 'python', 'docker', 'kubernetes', 'oracle', 'microsoft']
+        relevant_certs = sum(1 for keyword in cert_keywords if keyword in certifications.lower())
+        if relevant_certs >= 2:
+            bonus = 0.20  # +20% por certificaciones múltiples relevantes
+            applied_bonuses.append(f"Certificaciones profesionales múltiples (+{bonus*100:.0f}%)")
+        else:
+            bonus = 0.10  # +10% por certificaciones
+            applied_bonuses.append(f"Certificaciones profesionales (+{bonus*100:.0f}%)")
+        adjusted_probability += bonus
+    
+    # 5. Match perfecto de tecnologías (bonus especial)
+    job_tech_keywords = []
+    if 'full stack' in job_title: job_tech_keywords.extend(['javascript', 'react', 'node', 'python', 'java'])
+    if 'backend' in job_title: job_tech_keywords.extend(['python', 'java', 'node', 'django', 'spring'])
+    if 'frontend' in job_title: job_tech_keywords.extend(['react', 'angular', 'javascript', 'html', 'css'])
+    if 'php' in job_title or 'php' in requirements: job_tech_keywords.extend(['php', 'laravel'])
+    if 'java' in requirements: job_tech_keywords.extend(['java', 'spring'])
+    if 'python' in requirements: job_tech_keywords.extend(['python', 'django'])
+    
+    if job_tech_keywords:
+        matching_techs = sum(1 for tech in job_tech_keywords if tech in skills)
+        if matching_techs >= 3:
+            bonus = 0.35  # +35% por match perfecto de tecnologías
+            adjusted_probability += bonus
+            applied_bonuses.append(f"Match perfecto de tecnologías (+{bonus*100:.0f}%)")
+        elif matching_techs >= 2:
+            bonus = 0.20  # +20% por buen match de tecnologías
+            adjusted_probability += bonus
+            applied_bonuses.append(f"Buen match tecnológico (+{bonus*100:.0f}%)")
+    
+    # 6. Idiomas
+    if has_language_advantage:
+        bonus = 0.08  # +8% por ventaja idiomática
+        adjusted_probability += bonus
+        applied_bonuses.append(f"Ventaja idiomática (+{bonus*100:.0f}%)")
+    
+    # === BONIFICACIONES ESPECÍFICAS PARA JUNIOR ===
+    if is_junior and is_junior_position:
+        bonus = 0.15  # +15% extra por match de nivel junior
+        adjusted_probability += bonus
+        applied_bonuses.append(f"Match de nivel junior (+{bonus*100:.0f}%)")
+    
+    # === PENALIZACIONES ===
+    
+    # Penalización por falta de experiencia técnica
+    if years_exp == 0 and not is_junior_position:
+        penalty = 0.30  # -30% por falta de experiencia para puesto no junior
+        adjusted_probability -= penalty
+        applied_bonuses.append(f"Sin experiencia para puesto senior (-{penalty*100:.0f}%)")
+    
+    # Penalización por educación no técnica (solo para seniors)
+    if not has_technical_education and not is_junior and 'desarrollador' in job_title:
+        penalty = 0.15  # -15% por educación no técnica en puesto senior
+        adjusted_probability -= penalty
+        applied_bonuses.append(f"Educación no técnica (-{penalty*100:.0f}%)")
+    
+    # Limitar probabilidad ajustada entre 0.05 y 0.98
+    adjusted_probability = max(0.05, min(adjusted_probability, 0.98))
+    
+    # Usar probabilidad ajustada para candidatos junior
+    # Usar siempre la probabilidad ajustada
+    final_probability = adjusted_probability
+    
+    # Determinar nivel de compatibilidad con probabilidad final mejorada
+    if final_probability >= 0.80:
+        compatibility_level = "🟢 EXCELENTE COMPATIBILIDAD"
+        level_desc = "Match perfecto"
+        recommendation = f"🎯 CANDIDATO IDEAL: Con {final_probability*100:.1f}% de compatibilidad, es un match perfecto. Proceder inmediatamente con contratación."
+    elif final_probability >= 0.65:
         compatibility_level = "🟢 ALTA COMPATIBILIDAD"
         level_desc = "Excelente match"
-    elif probability >= 0.5:
+        recommendation = f"✅ ALTAMENTE RECOMENDADO: Con {final_probability*100:.1f}% de compatibilidad, proceder con entrevista final."
+    elif final_probability >= 0.50:
         compatibility_level = "🟡 COMPATIBILIDAD MODERADA"
         level_desc = "Buen potencial"
-    elif probability >= 0.3:
+        recommendation = f"⚡ BUEN CANDIDATO: Con {final_probability*100:.1f}% de compatibilidad, continuar con evaluación técnica."
+    elif final_probability >= 0.35:
         compatibility_level = "🟠 COMPATIBILIDAD BAJA-MEDIA"
         level_desc = "Requiere evaluación"
+        recommendation = f"⚠️ EVALUACIÓN REQUERIDA: {final_probability*100:.1f}% de compatibilidad sugiere revisar requisitos específicos."
     else:
-        compatibility_level = "🔴 BAJA COMPATIBILIDAD"
+        compatibility_level = "🔴 COMPATIBILIDAD BAJA"
         level_desc = "No recomendado"
+        recommendation = f"❌ NO RECOMENDADO: {final_probability*100:.1f}% de compatibilidad indica desajuste significativo."
     
-    # Generar recomendación detallada
-    if probability >= 0.7:
-        recommendation = f"🎯 ALTAMENTE RECOMENDADO: Este candidato tiene un {probability*100:.1f}% de probabilidad de éxito. Proceder inmediatamente con el proceso de entrevista."
-    elif probability >= 0.5:
-        recommendation = f"✅ RECOMENDADO: Con {probability*100:.1f}% de compatibilidad, es un buen candidato. Continuar con evaluación técnica."
-    elif probability >= 0.3:
-        recommendation = f"⚠️ EVALUACIÓN REQUERIDA: {probability*100:.1f}% de compatibilidad sugiere revisar requisitos específicos antes de descartar."
-    else:
-        recommendation = f"❌ NO RECOMENDADO: Solo {probability*100:.1f}% de compatibilidad. Considerar únicamente si hay escasez de candidatos."
+    # Agregar información sobre bonificaciones aplicadas
+    if applied_bonuses:
+        bonus_text = " Bonificaciones aplicadas: " + ", ".join(applied_bonuses)
+        recommendation += bonus_text
     
-    # Analizar fortalezas del candidato
+    # Analizar fortalezas del candidato (mejorado)
     strengths = []
     
-    # Experiencia
-    years_exp = candidate_data.anios_experiencia
-    if years_exp >= 7:
+    # Experiencia con análisis más matizado
+    if years_exp >= 5:
         strengths.append(f"💼 Experiencia sólida: {years_exp} años en el campo")
-    elif years_exp >= 3:
-        strengths.append(f"💼 Experiencia adecuada: {years_exp} años de experiencia")
+    elif years_exp >= 2:
+        strengths.append(f"💼 Experiencia moderada: {years_exp} años de desarrollo profesional")
+    elif years_exp >= 1:
+        strengths.append(f"🌱 Experiencia inicial: {years_exp} año(s) con potencial de crecimiento")
+    
+    # Educación técnica
+    if has_technical_education:
+        strengths.append("🎓 Formación técnica relevante para el puesto")
     
     # Habilidades técnicas
-    skills = candidate_data.habilidades.lower()
     technical_skills = []
-    if 'python' in skills: technical_skills.append('Python')
-    if 'javascript' in skills: technical_skills.append('JavaScript')
-    if 'react' in skills: technical_skills.append('React')
-    if 'node' in skills: technical_skills.append('Node.js')
-    if 'unity' in skills: technical_skills.append('Unity3D')
-    if 'ar' in skills or 'vr' in skills: technical_skills.append('AR/VR')
+    tech_keywords = ['python', 'javascript', 'java', 'react', 'node', 'django', 'spring', 'html', 'css', 'git', 'sql']
+    for skill in tech_keywords:
+        if skill in skills:
+            technical_skills.append(skill.capitalize())
     
     if technical_skills:
-        strengths.append(f"🛠️ Skills técnicos: {', '.join(technical_skills)}")
+        skills_text = ', '.join(technical_skills[:4])  # Mostrar las primeras 4
+        if len(technical_skills) > 4:
+            skills_text += f" y {len(technical_skills)-4} más"
+        strengths.append(f"🛠️ Tecnologías relevantes: {skills_text}")
     
     # Certificaciones
-    if candidate_data.certificaciones:
-        strengths.append(f"🏆 Certificaciones: {candidate_data.certificaciones[:50]}...")
+    if has_certifications:
+        cert_preview = certifications[:50] + "..." if len(certifications) > 50 else certifications
+        strengths.append(f"🏆 Certificaciones: {cert_preview}")
     
     # Idiomas
-    if candidate_data.idiomas and 'inglés' in candidate_data.idiomas.lower():
+    if has_language_advantage:
         strengths.append("🌍 Manejo de inglés (ventaja competitiva)")
     
-    # Identificar debilidades/desafíos
+    if not strengths:
+        strengths.append("💡 Candidato con potencial de desarrollo")
+    
+    # Identificar debilidades/desafíos (mejorado)
     weaknesses = []
     
-    # Compatibilidad educativa
-    education = candidate_data.nivel_educacion.lower()
-    job_title = offer_data.titulo.lower()
+    # Educación vs puesto
+    if not has_technical_education and not is_junior:
+        weaknesses.append("📚 Educación no técnica para posición especializada")
     
-    if 'comercial' in education and 'desarrollador' in job_title:
-        weaknesses.append("📚 Educación en área diferente (Comercial vs Técnica)")
+    # Experiencia vs requisitos
+    if years_exp < 2 and not is_junior_position:
+        weaknesses.append("⏱️ Experiencia limitada para los requisitos del puesto")
+    elif years_exp < 1:
+        weaknesses.append("🔰 Sin experiencia profesional documentada")
     
-    # Compatibilidad de skills
-    if 'ar' in skills and 'vr' in skills and 'full stack' in job_title:
-        weaknesses.append("🎯 Especialización muy específica (AR/VR) para puesto generalista")
+    # Skills alignment
+    if not has_relevant_skills:
+        weaknesses.append("🎯 Skills técnicos no completamente alineados con requisitos")
     
-    if years_exp < 3:
-        weaknesses.append(f"⏱️ Experiencia limitada ({years_exp} años) para los requisitos")
+    # Certificaciones para junior
+    if is_junior and not has_certifications:
+        weaknesses.append("📜 Sin certificaciones que demuestren conocimientos actualizados")
     
-    # Generar sugerencias
+    if not weaknesses:
+        weaknesses.append("🔍 Perfil sólido sin debilidades significativas")
+    
+    # Generar sugerencias mejoradas
     suggestions = []
     
-    if probability < 0.5:
-        suggestions.append("📈 Desarrollar skills en tecnologías web (HTML, CSS, JavaScript)")
-        suggestions.append("🎓 Considerar certificaciones en desarrollo Full Stack")
-        suggestions.append("💼 Buscar experiencia práctica en proyectos web")
+    if not has_relevant_skills:
+        if 'backend' in job_title or 'python' in requirements:
+            suggestions.append("📈 Desarrollar skills en tecnologías backend (Python, APIs, bases de datos)")
+        elif 'frontend' in job_title:
+            suggestions.append("📈 Desarrollar skills en tecnologías frontend (React, JavaScript, CSS)")
+        elif 'fullstack' in job_title or 'full stack' in job_title:
+            suggestions.append("📈 Desarrollar skills en tecnologías web (HTML, CSS, JavaScript, frameworks)")
     
-    if 'comercial' in education:
-        suggestions.append("🔧 Complementar formación con bootcamp técnico")
+    if not has_certifications:
+        if 'python' in requirements or 'python' in job_title:
+            suggestions.append("🎓 Considerar certificaciones en Python y frameworks relacionados")
+        elif 'javascript' in requirements:
+            suggestions.append("🎓 Considerar certificaciones en JavaScript y desarrollo web")
+        else:
+            suggestions.append("🎓 Obtener certificaciones profesionales relevantes al puesto")
     
-    if not technical_skills or len(technical_skills) < 3:
-        suggestions.append("🛠️ Ampliar portfolio de tecnologías")
+    if years_exp < 2:
+        suggestions.append("💼 Buscar experiencia práctica en proyectos reales o contribuciones open source")
     
-    # Factores de decisión
-    decision_factors = f"""
-📊 FACTORES CLAVE DE LA PREDICCIÓN:
-• Experiencia: {years_exp} años ({'✅ Adecuada' if years_exp >= 3 else '⚠️ Limitada'})
-• Educación: {candidate_data.nivel_educacion} ({'✅ Técnica' if 'sistemas' in education or 'informática' in education else '⚠️ No técnica'})
-• Skills: {len(technical_skills)} tecnologías identificadas ({'✅ Suficientes' if len(technical_skills) >= 3 else '⚠️ Limitadas'})
-• Especialización: {'🎯 Muy específica' if 'ar' in skills and 'vr' in skills else '🔄 Generalista'}
-• Match puesto: {'✅ Alto' if probability >= 0.5 else '⚠️ Medio' if probability >= 0.3 else '❌ Bajo'}
-"""
+    if not has_language_advantage and 'inglés' in requirements:
+        suggestions.append("🌍 Mejorar nivel de inglés para ampliar oportunidades")
+    
+    suggestions.append("🛠️ Ampliar portfolio de tecnologías y proyectos personales")
+    
+    # Factores de decisión mejorados
+    decision_factors = f"""📊 FACTORES CLAVE DE LA PREDICCIÓN:
+• Experiencia: {years_exp} años ({'✅ Adecuada' if years_exp >= 1 else '⚠️ Limitada'})
+• Educación: {'✅ Técnica' if has_technical_education else '⚠️ No técnica'}
+• Skills: {'✅ Relevantes' if has_relevant_skills else '⚠️ Limitadas'}
+• Certificaciones: {'✅ Presentes' if has_certifications else '⚠️ Ausentes'}
+• Nivel requerido: {'✅ Match' if (is_junior and is_junior_position) or (not is_junior and not is_junior_position) else '⚠️ Desajuste'}"""
     
     # Resumen ejecutivo
-    summary = f"""
-🎯 RESUMEN EJECUTIVO:
-Candidato con {years_exp} años de experiencia en {candidate_data.puesto_actual or 'desarrollo'}, 
-formación en {candidate_data.nivel_educacion}, presenta {probability*100:.1f}% de compatibilidad 
-para el puesto de {offer_data.titulo}. {level_desc} basado en análisis de ML.
-"""
+    summary = f"""🎯 RESUMEN EJECUTIVO:
+Candidato con {years_exp} años de experiencia como {candidate_data.puesto_actual or 'desarrollador'}, 
+formación en {candidate_data.nivel_educacion}, presenta {final_probability*100:.1f}% de compatibilidad 
+para el puesto de {offer_data.titulo}. {level_desc} basado en análisis de ML."""
     
     # Análisis detallado
-    detailed_analysis = f"""
-📋 ANÁLISIS DETALLADO DE COMPATIBILIDAD:
+    detailed_analysis = f"""📋 ANÁLISIS DETALLADO DE COMPATIBILIDAD:
 
 🔍 PERFIL DEL CANDIDATO:
 • Experiencia: {years_exp} años como {candidate_data.puesto_actual or 'desarrollador'}
@@ -272,8 +428,9 @@ para el puesto de {offer_data.titulo}. {level_desc} basado en análisis de ML.
 • Requisitos: {offer_data.requisitos[:100]}{'...' if len(offer_data.requisitos) > 100 else ''}
 
 🎯 RESULTADO DE COMPATIBILIDAD:
-• Probabilidad: {probability*100:.2f}% ({compatibility_level})
-• Predicción: {'✅ Compatible' if prediction else '❌ No compatible'}
+• Probabilidad base: {probability*100:.2f}%
+• Probabilidad ajustada: {final_probability*100:.2f}% ({compatibility_level})
+• Predicción: {'✅ Compatible' if final_probability >= 0.5 else '❌ No compatible'}
 • Confianza del modelo: {confidence}
 • Modelo utilizado: Gradient Boosting
 
@@ -281,18 +438,18 @@ para el puesto de {offer_data.titulo}. {level_desc} basado en análisis de ML.
 {recommendation}
 
 🔧 FACTORES DETERMINANTES:
-{decision_factors.strip()}
-"""
+{decision_factors}"""
     
     return {
         'compatibility_level': compatibility_level,
         'recommendation': recommendation,
-        'decision_factors': decision_factors.strip(),
+        'decision_factors': decision_factors,
         'strengths': strengths,
         'weaknesses': weaknesses,
         'suggestions': suggestions,
-        'summary': summary.strip(),
-        'detailed_analysis': detailed_analysis.strip()
+        'summary': summary,
+        'detailed_analysis': detailed_analysis,
+        'adjusted_probability': final_probability  # Retornar probabilidad ajustada
     }
 
 

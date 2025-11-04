@@ -74,16 +74,13 @@ class ImprovedModelTrainer:
         """Prepara datos con features mejoradas"""
         logger.info("🔄 Preparando datos con features mejoradas...")
         
-        # Extraer datos
-        raw_data = data_extractor.extract_all_data()
+        # Extraer datos usando el método correcto
+        df = data_extractor.create_training_dataset()
         
-        if not raw_data:
+        if df.empty:
             raise ValueError("No se pudieron extraer datos")
         
-        logger.info(f"📊 Datos extraídos: {len(raw_data)} registros")
-        
-        # Convertir a DataFrame
-        df = pd.DataFrame(raw_data)
+        logger.info(f"📊 Datos extraídos: {len(df)} registros")
         
         # Preprocessar
         df_processed = mongo_preprocessor.preprocess_data(df, fit_transformers=True)
