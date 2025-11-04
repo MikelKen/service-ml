@@ -1,0 +1,51 @@
+{
+  "training_date": "2025-11-03T22:08:37.438158",
+  "dataset_size": 9907,
+  "models_trained": [
+    "kmeans",
+    "dbscan"
+  ],
+  "files_generated": {
+    "preprocessor": "trained_models/clustering/candidates_clustering_preprocessor_20251103_220705.pkl",
+    "kmeans_model": "trained_models/clustering/candidates_clustering_kmeans_20251103_220705.pkl",
+    "dbscan_model": "trained_models/clustering/candidates_clustering_dbscan_20251103_220705.pkl",
+    "data_processed": "trained_models/clustering/candidates_clustering_data_20251103_220705.pkl"
+  },
+  "kmeans_results": {
+    "algorithm": "kmeans",
+    "n_clusters_found": 13,
+    "n_outliers": 0,
+    "total_samples": 9907,
+    "metrics": {
+      "silhouette_score": 0.37375714020144873,
+      "calinski_harabasz_score": 1654.2904078768204,
+      "davies_bouldin_score": 0.9670702041203865,
+      "n_clusters": 13,
+      "n_outliers": 0,
+      "inertia": 682124.0493456111
+    },
+    "cluster_sizes": {
+      "0": 382,
+      "1": 492,
+      "2": 357,
+      "3": 4678,
+      "4": 461,
+      "5": 483,
+      "6": 372,
+      "7": 360,
+      "8": 471,
+      "9": 486,
+      "10": 387,
+      "11": 491,
+      "12": 487
+    }
+  },
+  "dbscan_results": {
+    "algorithm": "dbscan",
+    "n_clusters_found": 1,
+    "n_outliers": 9907,
+    "total_samples": 9907,
+    "metrics": {},
+    "cluster_sizes": {}
+  }
+}

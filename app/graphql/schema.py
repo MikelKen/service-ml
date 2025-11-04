@@ -21,9 +21,14 @@ from app.graphql.types.feature_types import (
     CandidateFeatureList, JobOfferFeatureList, CompanyFeatureList,
     FeatureQueryInput, FeatureCollectionInfo
 )
+from app.graphql.types.clustering_types import (
+    ClusterAnalysis, ClusterProfile, SimilarCandidates,
+    ClusteringQueryInput, SimilarCandidatesInput, ClusterProfileInput
+)
 from app.graphql.resolvers import erp_resolvers
 from app.graphql.resolvers import ml_resolvers
 from app.graphql.resolvers import feature_resolvers
+from app.graphql.resolvers.clustering_resolvers import clustering_resolver
 from app.graphql.mutations.ml_mutations import MLMutation
 
 
@@ -142,6 +147,22 @@ class Query:
     @strawberry.field(description="Ofertas de una empresa específica")
     async def offers_by_company(self, company_id: str, limit: Optional[int] = 10) -> List[JobOfferFeature]:
         return await feature_resolvers.get_offers_by_company_id(company_id, limit or 10)
+    
+    # ==========================================
+    # CONSULTAS DE CLUSTERING NO SUPERVISADO
+    # ==========================================
+    
+    @strawberry.field(description="Análisis completo de clustering de candidatos")
+    async def analyze_candidate_clusters(self, input: Optional[ClusteringQueryInput] = None) -> ClusterAnalysis:
+        return await clustering_resolver.analyze_candidate_clusters(input)
+    
+    @strawberry.field(description="Encuentra candidatos similares basado en clustering")
+    async def find_similar_candidates(self, input: SimilarCandidatesInput) -> SimilarCandidates:
+        return await clustering_resolver.find_similar_candidates(input)
+    
+    @strawberry.field(description="Obtiene detalles específicos de un cluster")
+    async def get_cluster_profile_details(self, input: ClusterProfileInput) -> ClusterProfile:
+        return await clustering_resolver.get_cluster_profile_details(input)
 
 
 @strawberry.type
