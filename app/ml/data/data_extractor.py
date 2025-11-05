@@ -50,8 +50,11 @@ class DataExtractor:
             
             # Limpiar columnas de MongoDB
             if '_id' in df.columns:
-                df['candidate_id'] = df['_id'].astype(str)
                 df = df.drop('_id', axis=1)
+            
+            # Usar postulante_id como candidate_id si está disponible
+            if 'postulante_id' in df.columns:
+                df['candidate_id'] = df['postulante_id']
             
             # Renombrar columnas para consistencia
             column_mapping = {
@@ -180,18 +183,21 @@ class DataExtractor:
     def _combine_candidate_offer(self, candidate: pd.Series, offer: pd.Series, target: int) -> Dict:
         """Combina datos de candidato y oferta en un registro único"""
         
+        # Obtener candidate_id desde postulante_id o _id
+        candidate_id = candidate.get('postulante_id', candidate.get('candidate_id', candidate.get('_id', '')))
+        
         record = {
             # Información del candidato
-            'candidate_id': candidate.get('candidate_id', ''),
-            'years_experience': candidate.get('years_experience', 0),
-            'education_level': candidate.get('education_level', ''),
+            'candidate_id': candidate_id,
+            'years_experience': candidate.get('years_experience', candidate.get('anios_experiencia', 0)),
+            'education_level': candidate.get('education_level', candidate.get('nivel_educacion', '')),
             'skills': candidate.get('habilidades', ''),
             'languages': candidate.get('idiomas', ''),
             'certifications': candidate.get('certificaciones', ''),
-            'current_position': candidate.get('current_position', ''),
+            'current_position': candidate.get('current_position', candidate.get('puesto_actual', '')),
             
             # Información de la oferta
-            'offer_id': offer.get('offer_id', ''),
+            'offer_id': offer.get('offer_id', offer.get('oferta_id', offer.get('_id', ''))),
             'job_title': offer.get('titulo', ''),
             'salary': offer.get('salario', 0),
             'location': offer.get('ubicacion', ''),
@@ -213,10 +219,10 @@ class DataExtractor:
             self._connect_collections()
         
         try:
-            # Buscar candidato
-            candidate = self.candidates_collection.find_one({"_id": candidate_id})
+            # Buscar candidato por postulante_id primero, luego por _id
+            candidate = self.candidates_collection.find_one({"postulante_id": candidate_id})
             if not candidate:
-                candidate = self.candidates_collection.find_one({"postulante_id": candidate_id})
+                candidate = self.candidates_collection.find_one({"_id": candidate_id})
             
             # Buscar oferta
             offer = self.job_offers_collection.find_one({"_id": offer_id})
