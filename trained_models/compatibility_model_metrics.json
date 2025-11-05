@@ -1,0 +1,35 @@
+{
+  "model_name": "random_forest",
+  "metrics": {
+    "accuracy": 0.6203599550056242,
+    "precision": 0.5588092845875905,
+    "recall": 0.6203599550056242,
+    "f1_score": 0.5691446541970601,
+    "roc_auc": 0.5064785365124768,
+    "confusion_matrix": [
+      [
+        1015,
+        170
+      ],
+      [
+        505,
+        88
+      ]
+    ],
+    "cv_mean": 0.48592225023534963,
+    "cv_std": 0.01465302955490916
+  },
+  "feature_importance": {
+    "salary_per_experience": 0.1566156776044669,
+    "salary": 0.15588058468370275,
+    "current_position_encoded": 0.1381518811876318,
+    "years_experience": 0.11665890802426226,
+    "education_score": 0.05161034595050526,
+    "skills_count": 0.03401053017619189,
+    "languages_count": 0.02084385159703082,
+    "position_similarity": 0.017246159210492704,
+    "location_encoded": 0.01349865938772196,
+    "requirements_tfidf_26": 0.01330957738610477
+  },
+  "training_date": "2025-11-02T19:11:06.537228"
+}

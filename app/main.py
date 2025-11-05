@@ -6,9 +6,33 @@ import uvicorn
 import logging
 
 from app.config.settings import settings
-from app.graphql.simple_ml import Query, Mutation
-from app.routers import health, clustering, database, ml_database
-from app.database.connection import init_database, close_database
+from app.graphql.schema import schema
+from app.config.connection import init_database, close_database
+from app.services.sync_service import auto_sync_service
+
+# Importar routers disponibles de forma segura
+from app.routers import health
+try:
+    from app.routers import sync  # router de sincronización
+except Exception:
+    sync = None
+    logging.getLogger(__name__).warning("Router opcional 'sync' no encontrado. Se omitirá su registro.")
+try:
+    from app.routers import ml_database  # opcional
+except Exception:
+    ml_database = None
+    logging.getLogger(__name__).warning("Router opcional 'ml_database' no encontrado. Se omitirá su registro.")
+try:
+    from app.routers import clustering  # opcional
+except Exception:  # ImportError u otros
+    clustering = None
+    logging.getLogger(__name__).warning("Router opcional 'clustering' no encontrado. Se omitirá su registro.")
+
+try:
+    from app.routers import database  # opcional
+except Exception:
+    database = None
+    logging.getLogger(__name__).warning("Router opcional 'database' no encontrado. Se omitirá su registro.")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -32,10 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create GraphQL schema
-schema = strawberry.Schema(query=Query, mutation=Mutation)
-
-# Create GraphQL router
+# Create GraphQL schema - using the centralized schema
 graphql_app = GraphQLRouter(schema)
 
 # Add GraphQL endpoint
@@ -44,14 +65,21 @@ app.include_router(graphql_app, prefix="/graphql")
 # Add health check routes
 app.include_router(health.router, prefix="/api")
 
-# Add clustering routes
-app.include_router(clustering.router, prefix="/api")
+# Add sync routes
+if sync is not None:
+    app.include_router(sync.router, prefix="/api")
 
-# Add database query routes
-app.include_router(database.router, prefix="/api/db")
+# Add clustering routes (si el módulo existe)
+if clustering is not None:
+    app.include_router(clustering.router, prefix="/api")
 
-# Add ML database routes
-app.include_router(ml_database.router)
+# Add database query routes (si el módulo existe)
+if database is not None:
+    app.include_router(database.router, prefix="/api/db")
+
+# Add ML database routes (si el módulo existe)
+if ml_database is not None:
+    app.include_router(ml_database.router)
 
 
 @app.on_event("startup")
@@ -63,6 +91,9 @@ async def startup_event():
     db_connected = await init_database()
     if db_connected:
         logger.info("✅ Database connection established successfully!")
+        
+        # Iniciar servicio de sincronización automática
+        await auto_sync_service.start()
     else:
         logger.error("❌ Failed to connect to database!")
     
@@ -73,6 +104,10 @@ async def startup_event():
 async def shutdown_event():
     """Clean up on shutdown"""
     logger.info("🛑 Shutting down ML Hiring Service...")
+    
+    # Detener servicio de sincronización
+    await auto_sync_service.stop()
+    
     await close_database()
     logger.info("👋 ML Hiring Service shutdown complete!")
 
@@ -89,6 +124,10 @@ async def root():
             "graphql": "/graphql",
             "graphql_playground": "/graphql",
             "health": "/api/health",
+            "sync_status": "/api/sync/status",
+            "sync_force": "/api/sync/force-sync",
+            "sync_start": "/api/sync/start",
+            "sync_stop": "/api/sync/stop",
             "clustering": "/api/clustering",
             "database_queries": "/api/db",
             "ml_database": "/api/ml/database",
@@ -111,7 +150,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint with database status"""
-    from app.database.connection import db, mongodb
+    from app.config.connection import db, mongodb
     
     postgres_status = await db.test_connection()
     mongodb_status = await mongodb.test_connection()
