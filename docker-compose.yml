@@ -1,31 +1,29 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  ml-service:
+  service-ml:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ml-service
+    image: service-ml:latest
+    container_name: service-ml
+    env_file:
+      - .env
+    environment:
+      # Override defaults from Settings if needed (Settings is case-insensitive)
+      host: "0.0.0.0"
+      port: "3001"
+      debug: "false"
     ports:
       - "3001:3001"
-    environment:
-      - ENVIRONMENT=development
-      - DEBUG=true
-      - HOST=0.0.0.0
-      - PORT=3001
-    volumes:
-      # Mount source code for development (comment out for production)
-      - .:/app
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:3001/health')"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - ml-network
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
-networks:
-  ml-network:
-    driver: bridge
+    # Uncomment for live-reload during development (also set debug=true)
+    # volumes:
+    #   - ./:/app
