@@ -186,7 +186,7 @@ downloads/
 checkpoints/
 
 # ML specific
-*.pkl
+# *.pkl
 # *.model
 *.h5
 *.joblib
