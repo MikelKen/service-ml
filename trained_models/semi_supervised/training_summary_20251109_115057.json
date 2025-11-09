@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-11-09T11:50:57.942676",
+  "data_info": {
+    "total_samples": 9907,
+    "labeled_samples": 9907,
+    "unlabeled_samples": 0,
+    "features_count": 898,
+    "classes": {
+      "ACEPTADO": 0,
+      "Aceptada": 1,
+      "En Proceso": 2,
+      "En Revisi\u00f3n": 3,
+      "Entrevista Programada": 4,
+      "Enviada": 5,
+      "Evaluaci\u00f3n Final": 6,
+      "Evaluaci\u00f3n T\u00e9cnica": 7,
+      "Oferta Enviada": 8,
+      "Preseleccionada": 9,
+      "RECHAZADO": 10,
+      "Rechazada": 11
+    }
+  },
+  "models_trained": [
+    "label_propagation",
+    "label_spreading",
+    "self_training"
+  ],
+  "training_results": {
+    "label_propagation": {
+      "error": "Found array with 0 sample(s) (shape=(0, 898)) while a minimum of 1 is required by LabelPropagation."
+    },
+    "label_spreading": {
+      "error": "Found array with 0 sample(s) (shape=(0, 898)) while a minimum of 1 is required by LabelSpreading."
+    },
+    "self_training": {
+      "error": "Found array with 0 sample(s) (shape=(0, 898)) while a minimum of 1 is required by SelfTrainingClassifier."
+    }
+  },
+  "best_model": {
+    "model_type": null,
+    "score": -1,
+    "metric": "val_accuracy"
+  },
+  "files_generated": {
+    "preprocessor": "trained_models/semi_supervised/preprocessor.pkl",
+    "models": {}
+  }
+}

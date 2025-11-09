@@ -14,7 +14,13 @@ from app.graphql.types.ml_types import (
     CustomCompatibilityPredictionInput,
     CompatibilityPrediction, BatchCompatibilityResult, ModelInfo,
     ModelFeatureImportance, PredictionExplanation, TrainingDataSummary,
-    ModelPerformanceMetrics
+    ModelPerformanceMetrics,
+    # Tipos para modelo semi-supervisado
+    SemiSupervisedTrainingInput, SemiSupervisedTrainingResult,
+    SemiSupervisedModelInfo, SemiSupervisedDataSummary,
+    PostulacionEstadoPredictionInput, PostulacionEstadoPrediction,
+    BatchEstadoPredictionInput, BatchEstadoPredictionResult,
+    UnlabeledDataInsights, RetrainModelInput, RetrainModelResult
 )
 from app.graphql.types.feature_types import (
     CandidateFeature, JobOfferFeature, CompanyFeature,
@@ -29,6 +35,7 @@ from app.graphql.resolvers import erp_resolvers
 from app.graphql.resolvers import ml_resolvers
 from app.graphql.resolvers import feature_resolvers
 from app.graphql.resolvers.clustering_resolvers import clustering_resolver
+from app.graphql.resolvers.semi_supervised_resolvers import semi_supervised_resolver
 from app.graphql.mutations.ml_mutations import MLMutation
 
 
@@ -163,6 +170,59 @@ class Query:
     @strawberry.field(description="Obtiene detalles específicos de un cluster")
     async def get_cluster_profile_details(self, input: ClusterProfileInput) -> ClusterProfile:
         return await clustering_resolver.get_cluster_profile_details(input)
+    
+    # ==========================================
+    # CONSULTAS MODELO SEMI-SUPERVISADO
+    # ==========================================
+    
+    @strawberry.field(description="Entrena modelos semi-supervisados para predicción de estados de postulaciones")
+    async def train_semi_supervised_models(self, config: Optional[SemiSupervisedTrainingInput] = None) -> SemiSupervisedTrainingResult:
+        return await semi_supervised_resolver.train_semi_supervised_models(config)
+    
+    @strawberry.field(description="Predice el estado de una postulación usando modelo semi-supervisado")
+    async def predict_postulacion_estado(self, input_data: PostulacionEstadoPredictionInput, model_type: Optional[str] = None) -> PostulacionEstadoPrediction:
+        return await semi_supervised_resolver.predict_postulacion_estado(input_data, model_type)
+    
+    @strawberry.field(description="Predice estados de múltiples postulaciones en batch")
+    async def predict_batch_estados(self, input_data: BatchEstadoPredictionInput) -> BatchEstadoPredictionResult:
+        return await semi_supervised_resolver.predict_batch_estados(input_data)
+    
+    @strawberry.field(description="Obtiene resumen de datos para modelo semi-supervisado")
+    async def get_semi_supervised_data_summary(self) -> SemiSupervisedDataSummary:
+        return await semi_supervised_resolver.get_semi_supervised_data_summary()
+    
+    @strawberry.field(description="Obtiene información de modelos semi-supervisados entrenados")
+    async def get_trained_models_info(self) -> List[SemiSupervisedModelInfo]:
+        return await semi_supervised_resolver.get_trained_models_info()
+    
+    @strawberry.field(description="Analiza datos no etiquetados y proporciona insights")
+    async def analyze_unlabeled_data(self) -> UnlabeledDataInsights:
+        return await semi_supervised_resolver.analyze_unlabeled_data()
+    
+    # Aliases con camelCase para mejor compatibilidad
+    @strawberry.field(description="Entrena modelos semi-supervisados (camelCase alias)", name="trainSemiSupervisedModels")
+    async def train_semi_supervised_models_camel(self, config: Optional[SemiSupervisedTrainingInput] = None) -> SemiSupervisedTrainingResult:
+        return await semi_supervised_resolver.train_semi_supervised_models(config)
+    
+    @strawberry.field(description="Predice estado de postulación (camelCase alias)", name="predictPostulacionEstado")
+    async def predict_postulacion_estado_camel(self, input_data: PostulacionEstadoPredictionInput, model_type: Optional[str] = None) -> PostulacionEstadoPrediction:
+        return await semi_supervised_resolver.predict_postulacion_estado(input_data, model_type)
+    
+    @strawberry.field(description="Predicción batch de estados (camelCase alias)", name="predictBatchEstados")
+    async def predict_batch_estados_camel(self, input_data: BatchEstadoPredictionInput) -> BatchEstadoPredictionResult:
+        return await semi_supervised_resolver.predict_batch_estados(input_data)
+    
+    @strawberry.field(description="Resumen de datos semi-supervisados (camelCase alias)", name="getSemiSupervisedDataSummary")
+    async def get_semi_supervised_data_summary_camel(self) -> SemiSupervisedDataSummary:
+        return await semi_supervised_resolver.get_semi_supervised_data_summary()
+    
+    @strawberry.field(description="Información de modelos entrenados (camelCase alias)", name="getTrainedModelsInfo")
+    async def get_trained_models_info_camel(self) -> List[SemiSupervisedModelInfo]:
+        return await semi_supervised_resolver.get_trained_models_info()
+    
+    @strawberry.field(description="Análisis de datos no etiquetados (camelCase alias)", name="analyzeUnlabeledData")
+    async def analyze_unlabeled_data_camel(self) -> UnlabeledDataInsights:
+        return await semi_supervised_resolver.analyze_unlabeled_data()
 
 
 @strawberry.type

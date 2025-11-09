@@ -2,8 +2,27 @@
 Tipos de GraphQL para Machine Learning - Sistema de Compatibilidad
 """
 import strawberry
-from typing import Dict, List, Optional, Any
+from typing import List, Optional, Any
 from datetime import datetime
+
+# Tipos auxiliares para compatibilidad con GraphQL
+@strawberry.type
+class KeyValuePair:
+    """Par clave-valor para representar diccionarios en GraphQL"""
+    key: str
+    value: str
+
+@strawberry.type
+class KeyIntValuePair:
+    """Par clave-valor para diccionarios con valores enteros"""
+    key: str
+    value: int
+
+@strawberry.type
+class KeyFloatValuePair:
+    """Par clave-valor para diccionarios con valores flotantes"""
+    key: str
+    value: float
 
 
 @strawberry.input
@@ -310,3 +329,248 @@ class DatasetInfo:
     missing_values: MissingValues
     data_types: DataTypes
     last_updated: Optional[datetime] = None
+
+
+# === TIPOS PARA MODELO SEMI-SUPERVISADO ===
+
+@strawberry.input
+class SemiSupervisedTrainingInput:
+    """Input para entrenamiento semi-supervisado"""
+    model_types: Optional[List[str]] = None  # ['label_propagation', 'label_spreading', 'self_training']
+    save_to_mongo: Optional[bool] = True
+    validation_split: Optional[float] = 0.2
+
+
+@strawberry.input
+class PostulacionEstadoPredictionInput:
+    """Input para predicción de estado de postulación"""
+    postulacion_id: Optional[str] = None
+    # Datos manuales si no se especifica ID
+    nombre: Optional[str] = None
+    anios_experiencia: Optional[int] = None
+    nivel_educacion: Optional[str] = None
+    habilidades: Optional[str] = None
+    idiomas: Optional[str] = None
+    certificaciones: Optional[str] = None
+    puesto_actual: Optional[str] = None
+    # Datos de la oferta
+    oferta_titulo: Optional[str] = None
+    oferta_salario: Optional[float] = None
+    oferta_requisitos: Optional[str] = None
+    empresa_rubro: Optional[str] = None
+
+
+@strawberry.input
+class BatchEstadoPredictionInput:
+    """Input para predicción batch de estados"""
+    postulaciones: List[PostulacionEstadoPredictionInput]
+    model_type: Optional[str] = None  # Tipo de modelo a usar
+
+
+@strawberry.type
+class PostulacionEstadoPrediction:
+    """Resultado de predicción de estado de postulación"""
+    postulacion_id: Optional[str] = None
+    predicted_estado: str
+    confidence: float
+    probability_distribution: Optional[List[KeyFloatValuePair]] = None
+    
+    # Información adicional
+    confidence_level: Optional[str] = None  # 'high', 'medium', 'low'
+    model_used: Optional[str] = None
+    prediction_timestamp: Optional[str] = None
+    
+    # Factores de decisión
+    key_factors: Optional[List[str]] = None
+    experience_score: Optional[float] = None
+    skills_score: Optional[float] = None
+    education_score: Optional[float] = None
+    
+    # Metadatos
+    processing_time_ms: Optional[float] = None
+    error: Optional[str] = None
+
+
+@strawberry.type
+class BatchEstadoPredictionResult:
+    """Resultado de predicción batch de estados"""
+    predictions: List[PostulacionEstadoPrediction]
+    total_processed: int
+    success_count: int
+    error_count: int
+    model_used: str
+    processing_time: float
+    summary_stats: Optional[List[KeyIntValuePair]] = None
+
+
+@strawberry.type
+class SemiSupervisedModelInfo:
+    """Información de modelo semi-supervisado"""
+    model_type: str
+    is_trained: bool
+    training_timestamp: Optional[str] = None
+    
+    # Métricas de entrenamiento
+    train_accuracy: Optional[float] = None
+    val_accuracy: Optional[float] = None
+    
+    # Estadísticas de datos
+    labeled_samples: Optional[int] = None
+    unlabeled_samples: Optional[int] = None
+    total_samples: Optional[int] = None
+    classes: Optional[List[str]] = None
+    
+    # Predicciones en datos no etiquetados
+    unlabeled_predictions_count: Optional[int] = None
+    prediction_confidence_mean: Optional[float] = None
+    prediction_distribution: Optional[List[KeyIntValuePair]] = None
+    
+    # Archivos
+    model_path: Optional[str] = None
+    metrics_available: Optional[bool] = None
+
+
+@strawberry.type
+class SemiSupervisedTrainingResult:
+    """Resultado del entrenamiento semi-supervisado"""
+    success: bool
+    message: str
+    
+    # Información de datos
+    total_samples: int
+    labeled_samples: int
+    unlabeled_samples: int
+    features_count: int
+    classes_found: List[str]
+    
+    # Modelos entrenados
+    models_trained: List[str]
+    models_info: List[SemiSupervisedModelInfo]
+    
+    # Mejor modelo
+    best_model_type: Optional[str] = None
+    best_model_score: Optional[float] = None
+    
+    # Métricas generales
+    training_time: Optional[float] = None
+    files_generated: Optional[List[str]] = None
+    
+    # Resumen de predicciones
+    unlabeled_predictions_generated: Optional[int] = None
+    high_confidence_predictions: Optional[int] = None
+    
+    # Errores
+    errors: Optional[List[str]] = None
+
+
+@strawberry.type
+class SemiSupervisedDataSummary:
+    """Resumen de datos para semi-supervisado"""
+    total_postulaciones: int
+    labeled_postulaciones: int
+    unlabeled_postulaciones: int
+    labeled_percentage: float
+    
+    # Distribución de estados
+    estado_distribution: List[KeyIntValuePair]
+    
+    # Estadísticas de calidad
+    missing_data_percentage: Optional[float] = None
+    completeness_score: Optional[float] = None
+    
+    # Recomendaciones
+    can_train_semi_supervised: bool
+    recommendations: List[str]
+    
+    # Estadísticas por tabla
+    table_stats: Optional[List[KeyValuePair]] = None
+
+
+@strawberry.type
+class ModelComparisonResult:
+    """Resultado de comparación de modelos"""
+    model_type: str
+    performance_metrics: List[KeyFloatValuePair]
+    prediction_quality: List[KeyFloatValuePair]
+    training_efficiency: List[KeyFloatValuePair]
+    recommendation_score: float
+    pros: List[str]
+    cons: List[str]
+
+
+@strawberry.type
+class SemiSupervisedModelComparison:
+    """Comparación de modelos semi-supervisados"""
+    comparison_timestamp: str
+    models_compared: List[ModelComparisonResult]
+    recommended_model: str
+    summary: str
+    detailed_analysis: Optional[str] = None
+
+
+@strawberry.type
+class PredictionConfidenceAnalysis:
+    """Análisis de confianza de predicciones"""
+    total_predictions: int
+    high_confidence_count: int
+    medium_confidence_count: int
+    low_confidence_count: int
+    
+    confidence_distribution: List[KeyFloatValuePair]
+    
+    # Recomendaciones
+    reliable_predictions: int
+    review_needed_predictions: int
+    manual_verification_needed: int
+    
+    # Estadísticas por estado predicho
+    confidence_by_estado: Optional[List[KeyValuePair]] = None
+
+
+@strawberry.type
+class UnlabeledDataInsights:
+    """Insights de datos no etiquetados"""
+    total_unlabeled: int
+    
+    # Distribución de predicciones
+    predicted_estados: List[KeyIntValuePair]
+    confidence_stats: PredictionConfidenceAnalysis
+    
+    # Patrones identificados
+    common_patterns: Optional[List[str]] = None
+    outliers_detected: Optional[int] = None
+    
+    # Recomendaciones de etiquetado
+    priority_labeling_candidates: Optional[List[str]] = None
+    labeling_strategy: Optional[str] = None
+
+
+@strawberry.input
+class RetrainModelInput:
+    """Input para re-entrenar modelo"""
+    model_type: Optional[str] = None  # Si no se especifica, usa el mejor modelo anterior
+    include_new_predictions: Optional[bool] = False  # Incluir predicciones como pseudo-etiquetas
+    confidence_threshold: Optional[float] = 0.8  # Umbral para pseudo-etiquetas
+
+
+@strawberry.type
+class RetrainModelResult:
+    """Resultado de re-entrenamiento"""
+    success: bool
+    message: str
+    model_type: str
+    
+    # Comparación con modelo anterior
+    old_performance: Optional[List[KeyFloatValuePair]] = None
+    new_performance: Optional[List[KeyFloatValuePair]] = None
+    improvement: Optional[List[KeyFloatValuePair]] = None
+    
+    # Nuevos datos utilizados
+    new_labeled_data: Optional[int] = None
+    pseudo_labels_used: Optional[int] = None
+    
+    # Métricas
+    training_time: float
+    model_path: str
+    
+    recommendations: Optional[List[str]] = None
