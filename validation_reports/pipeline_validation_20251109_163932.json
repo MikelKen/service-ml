@@ -1,0 +1,281 @@
+{
+  "timestamp": "2025-11-09T16:39:32.060833",
+  "summary": {
+    "total_validations": 12,
+    "successful": 12,
+    "failed": 0,
+    "success_rate": 1.0
+  },
+  "validation_results": {
+    "Conexión PostgreSQL": {
+      "success": true,
+      "result": {
+        "connected": true,
+        "version": "PostgreSQL 17.5 (6bc9ef8) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+        "database": "service-erp-rrhh",
+        "user": "neondb_owner"
+      },
+      "timestamp": "2025-11-09T16:39:17.268518"
+    },
+    "Conexión MongoDB": {
+      "success": true,
+      "result": {
+        "connected": true,
+        "version": "8.0.4",
+        "collections_count": 7,
+        "collections": [
+          "job_offers_features",
+          "candidates_features",
+          "system.version",
+          "system.users",
+          "companies_features",
+          "system.roles",
+          "system.keys"
+        ]
+      },
+      "timestamp": "2025-11-09T16:39:19.892526"
+    },
+    "Datos en PostgreSQL": {
+      "success": true,
+      "result": {
+        "tables_found": [],
+        "record_counts": {},
+        "total_records": 0
+      },
+      "timestamp": "2025-11-09T16:39:22.021205"
+    },
+    "Colecciones MongoDB": {
+      "success": true,
+      "result": {
+        "expected_collections": [
+          "ml_applications",
+          "ml_candidates",
+          "ml_job_offers",
+          "ml_interviews",
+          "ml_model_tracking"
+        ],
+        "existing_collections": [
+          "job_offers_features",
+          "candidates_features",
+          "system.version",
+          "system.users",
+          "companies_features",
+          "system.roles",
+          "system.keys"
+        ],
+        "collection_status": {
+          "ml_applications": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_candidates": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_job_offers": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_interviews": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_model_tracking": {
+            "exists": false,
+            "count": 0
+          }
+        }
+      },
+      "timestamp": "2025-11-09T16:39:24.045278"
+    },
+    "Extracción de datos": {
+      "success": true,
+      "result": {
+        "extractor_file_exists": false,
+        "error": "Script extract_postgres_data.py no encontrado",
+        "extraction_script_ready": false
+      },
+      "timestamp": "2025-11-09T16:39:24.046527"
+    },
+    "Migración a MongoDB": {
+      "success": true,
+      "result": {
+        "migrated_counts": {
+          "ml_applications": 0,
+          "ml_candidates": 0,
+          "ml_job_offers": 0,
+          "ml_interviews": 0
+        },
+        "total_migrated": 0,
+        "sample_structures": {}
+      },
+      "timestamp": "2025-11-09T16:39:26.589407"
+    },
+    "Preprocessor": {
+      "success": true,
+      "result": {
+        "preprocessor_loaded": true,
+        "class_name": "SemiSupervisedPreprocessor",
+        "is_fitted": false,
+        "methods_available": [
+          "categorical_imputer",
+          "connect_mongodb",
+          "create_comprehensive_features",
+          "encode_categorical_features",
+          "extract_features_from_nested_data",
+          "feature_importance",
+          "feature_names",
+          "fit_transform",
+          "get_feature_importance_from_model",
+          "is_fitted",
+          "label_encoders",
+          "labeled_threshold",
+          "load_data_from_mongodb",
+          "load_preprocessor",
+          "min_labeled_samples",
+          "minmax_scaler",
+          "numeric_imputer",
+          "pca",
+          "preprocessing_config",
+          "process_text_features",
+          "save_preprocessor",
+          "split_labeled_unlabeled_data",
+          "standard_scaler",
+          "tfidf_requirements",
+          "tfidf_skills",
+          "transform"
+        ]
+      },
+      "timestamp": "2025-11-09T16:39:30.949570"
+    },
+    "Modelo semi-supervisado": {
+      "success": true,
+      "result": {
+        "model_class_loaded": true,
+        "algorithms_tested": {
+          "label_propagation": {
+            "can_initialize": true,
+            "algorithm_set": true
+          },
+          "label_spreading": {
+            "can_initialize": true,
+            "algorithm_set": true
+          },
+          "self_training_rf": {
+            "can_initialize": true,
+            "algorithm_set": true
+          }
+        },
+        "available_algorithms": [
+          "label_propagation",
+          "label_spreading",
+          "self_training_rf"
+        ]
+      },
+      "timestamp": "2025-11-09T16:39:31.107129"
+    },
+    "GraphQL Types": {
+      "success": true,
+      "result": {
+        "all_types_loaded": true,
+        "types_status": {
+          "PredictionInput": true,
+          "BatchPredictionResult": true,
+          "ModelTrainingResult": true,
+          "PredictionStatus": true
+        }
+      },
+      "timestamp": "2025-11-09T16:39:32.037951"
+    },
+    "GraphQL Resolvers": {
+      "success": true,
+      "result": {
+        "resolver_class_loaded": true,
+        "methods_status": {
+          "get_dataset_statistics": true,
+          "get_applications_with_predictions": true,
+          "get_active_model_info": true,
+          "predict_single_application": true,
+          "validate_dataset": true
+        },
+        "all_methods_available": true
+      },
+      "timestamp": "2025-11-09T16:39:32.045236"
+    },
+    "GraphQL Mutations": {
+      "success": true,
+      "result": {
+        "mutations_class_loaded": true,
+        "methods_status": {
+          "train_semi_supervised_model": true,
+          "predict_batch_applications": true,
+          "retrain_model_with_new_labels": true
+        },
+        "all_methods_available": true
+      },
+      "timestamp": "2025-11-09T16:39:32.055908"
+    },
+    "Pipeline completo": {
+      "success": true,
+      "result": {
+        "components_status": {
+          "extract_postgres_data.py": {
+            "exists": false,
+            "size": 0
+          },
+          "create_mongo_collections_ml.py": {
+            "exists": false,
+            "size": 0
+          },
+          "migrate_postgres_to_mongo_ml.py": {
+            "exists": false,
+            "size": 0
+          },
+          "app/ml/preprocessing/semi_supervised_preprocessor.py": {
+            "exists": true,
+            "size": 25120
+          },
+          "app/ml/models/semi_supervised_model.py": {
+            "exists": true,
+            "size": 22308
+          },
+          "app/graphql/types/semi_supervised_types.py": {
+            "exists": true,
+            "size": 9930
+          },
+          "app/graphql/resolvers/semi_supervised_resolvers.py": {
+            "exists": true,
+            "size": 23810
+          },
+          "app/graphql/mutations/semi_supervised_mutations.py": {
+            "exists": true,
+            "size": 25216
+          },
+          "train_semi_supervised_step_by_step.py": {
+            "exists": true,
+            "size": 14273
+          }
+        },
+        "directories_status": {
+          "trained_models/semi_supervised": {
+            "exists": true,
+            "is_directory": true
+          },
+          "training_reports": {
+            "exists": false,
+            "is_directory": false
+          },
+          "logs": {
+            "exists": true,
+            "is_directory": true
+          }
+        },
+        "all_components_exist": false,
+        "pipeline_ready": false
+      },
+      "timestamp": "2025-11-09T16:39:32.060025"
+    }
+  },
+  "errors": [],
+  "pipeline_status": "READY"
+}

@@ -1,0 +1,262 @@
+{
+  "timestamp": "2025-11-09T16:37:17.734562",
+  "summary": {
+    "total_validations": 12,
+    "successful": 9,
+    "failed": 3,
+    "success_rate": 0.75
+  },
+  "validation_results": {
+    "Conexión PostgreSQL": {
+      "success": true,
+      "result": {
+        "connected": true,
+        "version": "PostgreSQL 17.5 (6bc9ef8) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+        "database": "service-erp-rrhh",
+        "user": "neondb_owner"
+      },
+      "timestamp": "2025-11-09T16:37:03.339598"
+    },
+    "Conexión MongoDB": {
+      "success": true,
+      "result": {
+        "connected": true,
+        "version": "8.0.4",
+        "collections_count": 7,
+        "collections": [
+          "job_offers_features",
+          "candidates_features",
+          "system.version",
+          "system.users",
+          "companies_features",
+          "system.roles",
+          "system.keys"
+        ]
+      },
+      "timestamp": "2025-11-09T16:37:05.677710"
+    },
+    "Datos en PostgreSQL": {
+      "success": true,
+      "result": {
+        "tables_found": [],
+        "record_counts": {},
+        "total_records": 0
+      },
+      "timestamp": "2025-11-09T16:37:07.519202"
+    },
+    "Colecciones MongoDB": {
+      "success": true,
+      "result": {
+        "expected_collections": [
+          "ml_applications",
+          "ml_candidates",
+          "ml_job_offers",
+          "ml_interviews",
+          "ml_model_tracking"
+        ],
+        "existing_collections": [
+          "job_offers_features",
+          "candidates_features",
+          "system.version",
+          "system.users",
+          "companies_features",
+          "system.roles",
+          "system.keys"
+        ],
+        "collection_status": {
+          "ml_applications": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_candidates": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_job_offers": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_interviews": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_model_tracking": {
+            "exists": false,
+            "count": 0
+          }
+        }
+      },
+      "timestamp": "2025-11-09T16:37:09.428438"
+    },
+    "Extracción de datos": {
+      "success": true,
+      "result": {
+        "extractor_file_exists": false,
+        "error": "Script extract_postgres_data.py no encontrado",
+        "extraction_script_ready": false
+      },
+      "timestamp": "2025-11-09T16:37:09.429751"
+    },
+    "Migración a MongoDB": {
+      "success": true,
+      "result": {
+        "migrated_counts": {
+          "ml_applications": 0,
+          "ml_candidates": 0,
+          "ml_job_offers": 0,
+          "ml_interviews": 0
+        },
+        "total_migrated": 0,
+        "sample_structures": {}
+      },
+      "timestamp": "2025-11-09T16:37:11.838029"
+    },
+    "Preprocessor": {
+      "success": true,
+      "result": {
+        "preprocessor_loaded": true,
+        "class_name": "SemiSupervisedPreprocessor",
+        "is_fitted": false,
+        "methods_available": [
+          "categorical_imputer",
+          "connect_mongodb",
+          "create_comprehensive_features",
+          "encode_categorical_features",
+          "extract_features_from_nested_data",
+          "feature_importance",
+          "feature_names",
+          "fit_transform",
+          "get_feature_importance_from_model",
+          "is_fitted",
+          "label_encoders",
+          "labeled_threshold",
+          "load_data_from_mongodb",
+          "load_preprocessor",
+          "min_labeled_samples",
+          "minmax_scaler",
+          "numeric_imputer",
+          "pca",
+          "preprocessing_config",
+          "process_text_features",
+          "save_preprocessor",
+          "split_labeled_unlabeled_data",
+          "standard_scaler",
+          "tfidf_requirements",
+          "tfidf_skills",
+          "transform"
+        ]
+      },
+      "timestamp": "2025-11-09T16:37:16.532408"
+    },
+    "Modelo semi-supervisado": {
+      "success": true,
+      "result": {
+        "model_class_loaded": true,
+        "algorithms_tested": {
+          "label_propagation": {
+            "can_initialize": true,
+            "algorithm_set": true
+          },
+          "label_spreading": {
+            "can_initialize": true,
+            "algorithm_set": true
+          },
+          "self_training_rf": {
+            "can_initialize": true,
+            "algorithm_set": true
+          }
+        },
+        "available_algorithms": [
+          "label_propagation",
+          "label_spreading",
+          "self_training_rf"
+        ]
+      },
+      "timestamp": "2025-11-09T16:37:16.697200"
+    },
+    "GraphQL Types": {
+      "success": false,
+      "error": "Error validando tipos GraphQL: cannot import name 'SemiSupervisedPredictionResult' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 335, in _validate_graphql_types\n    from app.graphql.types.semi_supervised_types import (\n    ...<4 lines>...\n    )\nImportError: cannot import name 'SemiSupervisedPredictionResult' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 355, in _validate_graphql_types\n    raise Exception(f\"Error validando tipos GraphQL: {e}\")\nException: Error validando tipos GraphQL: cannot import name 'SemiSupervisedPredictionResult' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)\n",
+      "timestamp": "2025-11-09T16:37:17.699864"
+    },
+    "GraphQL Resolvers": {
+      "success": false,
+      "error": "Error validando resolvers: cannot import name 'SemiSupervisedResolver' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 360, in _validate_graphql_resolvers\n    from app.graphql.resolvers.semi_supervised_resolvers import SemiSupervisedResolver\nImportError: cannot import name 'SemiSupervisedResolver' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 384, in _validate_graphql_resolvers\n    raise Exception(f\"Error validando resolvers: {e}\")\nException: Error validando resolvers: cannot import name 'SemiSupervisedResolver' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)\n",
+      "timestamp": "2025-11-09T16:37:17.710341"
+    },
+    "GraphQL Mutations": {
+      "success": false,
+      "error": "Error validando mutations: cannot import name 'predict_batch_applications' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 389, in _validate_graphql_mutations\n    from app.graphql.mutations.semi_supervised_mutations import (\n    ...<3 lines>...\n    )\nImportError: cannot import name 'predict_batch_applications' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 407, in _validate_graphql_mutations\n    raise Exception(f\"Error validando mutations: {e}\")\nException: Error validando mutations: cannot import name 'predict_batch_applications' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)\n",
+      "timestamp": "2025-11-09T16:37:17.727780"
+    },
+    "Pipeline completo": {
+      "success": true,
+      "result": {
+        "components_status": {
+          "extract_postgres_data.py": {
+            "exists": false,
+            "size": 0
+          },
+          "create_mongo_collections_ml.py": {
+            "exists": false,
+            "size": 0
+          },
+          "migrate_postgres_to_mongo_ml.py": {
+            "exists": false,
+            "size": 0
+          },
+          "app/ml/preprocessing/semi_supervised_preprocessor.py": {
+            "exists": true,
+            "size": 25120
+          },
+          "app/ml/models/semi_supervised_model.py": {
+            "exists": true,
+            "size": 22308
+          },
+          "app/graphql/types/semi_supervised_types.py": {
+            "exists": true,
+            "size": 9930
+          },
+          "app/graphql/resolvers/semi_supervised_resolvers.py": {
+            "exists": true,
+            "size": 23810
+          },
+          "app/graphql/mutations/semi_supervised_mutations.py": {
+            "exists": true,
+            "size": 25216
+          },
+          "train_semi_supervised_step_by_step.py": {
+            "exists": true,
+            "size": 14273
+          }
+        },
+        "directories_status": {
+          "trained_models/semi_supervised": {
+            "exists": true,
+            "is_directory": true
+          },
+          "training_reports": {
+            "exists": false,
+            "is_directory": false
+          },
+          "logs": {
+            "exists": true,
+            "is_directory": true
+          }
+        },
+        "all_components_exist": false,
+        "pipeline_ready": false
+      },
+      "timestamp": "2025-11-09T16:37:17.732077"
+    }
+  },
+  "errors": [
+    "Error en GraphQL Types: Error validando tipos GraphQL: cannot import name 'SemiSupervisedPredictionResult' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)",
+    "Error en GraphQL Resolvers: Error validando resolvers: cannot import name 'SemiSupervisedResolver' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)",
+    "Error en GraphQL Mutations: Error validando mutations: cannot import name 'predict_batch_applications' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)"
+  ],
+  "pipeline_status": "NEEDS_ATTENTION"
+}

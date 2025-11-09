@@ -1,0 +1,37 @@
+{
+  "algorithm": "self_training_lr",
+  "version": "1.0",
+  "created_at": "2025-11-09T20:56:40.910660+00:00",
+  "training_config": {
+    "base_classifier": "LogisticRegression(class_weight='balanced', max_iter=1000, random_state=42)",
+    "threshold": 0.7,
+    "max_iter": 10,
+    "verbose": true
+  },
+  "performance_metrics": {
+    "train_accuracy": 0.84,
+    "train_precision": 0.8498701298701299,
+    "train_recall": 0.84,
+    "train_f1": 0.8394871794871795,
+    "val_accuracy": 0.8,
+    "val_precision": 0.85,
+    "val_recall": 0.8,
+    "val_f1": 0.7809523809523808,
+    "val_roc_auc": 0.8333333333333333,
+    "cv_f1_mean": 0.5333333333333333,
+    "cv_f1_std": 0.21107649793821054
+  },
+  "pseudo_label_stats": {
+    "total_unlabeled": 8328,
+    "pseudo_label_distribution": {
+      "positive": 4929,
+      "negative": 3399
+    },
+    "confidence_stats": {
+      "mean_confidence": 0.9776033862798382,
+      "median_confidence": 0.9999997090195438,
+      "high_confidence_samples": 7968,
+      "low_confidence_samples": 115
+    }
+  }
+}

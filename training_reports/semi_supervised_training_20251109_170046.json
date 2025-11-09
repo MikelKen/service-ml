@@ -1,0 +1,178 @@
+{
+  "timestamp": "2025-11-09T17:00:46.230353",
+  "preprocessing_summary": {
+    "total_features": 425,
+    "is_fitted": true
+  },
+  "models_trained": [
+    {
+      "algorithm": "label_propagation",
+      "success": true,
+      "metrics": {
+        "train_accuracy": 0.92,
+        "train_precision": 0.92,
+        "train_recall": 0.92,
+        "train_f1": 0.92,
+        "val_accuracy": 0.8,
+        "val_precision": 0.85,
+        "val_recall": 0.8,
+        "val_f1": 0.7809523809523808,
+        "val_roc_auc": 0.5,
+        "cv_f1_mean": 0.5595238095238095,
+        "cv_f1_std": 0.2227838707384906
+      },
+      "training_time_seconds": 6.031123,
+      "labeled_samples": 25,
+      "unlabeled_samples": 8328,
+      "pseudo_label_stats": {
+        "total_unlabeled": 8328,
+        "pseudo_label_distribution": {
+          "positive": 4592,
+          "negative": 3736
+        },
+        "confidence_stats": {
+          "mean_confidence": NaN,
+          "median_confidence": NaN,
+          "high_confidence_samples": 4828,
+          "low_confidence_samples": 1365
+        }
+      }
+    },
+    {
+      "algorithm": "label_spreading",
+      "success": true,
+      "metrics": {
+        "train_accuracy": 0.92,
+        "train_precision": 0.9314285714285714,
+        "train_recall": 0.92,
+        "train_f1": 0.9197435897435898,
+        "val_accuracy": 0.6,
+        "val_precision": 0.8,
+        "val_recall": 0.6,
+        "val_f1": 0.5666666666666667,
+        "cv_f1_mean": 0.5595238095238095,
+        "cv_f1_std": 0.2227838707384906
+      },
+      "training_time_seconds": 0.274205,
+      "labeled_samples": 25,
+      "unlabeled_samples": 8328,
+      "pseudo_label_stats": {
+        "total_unlabeled": 8328,
+        "pseudo_label_distribution": {
+          "positive": 1438,
+          "negative": 6890
+        },
+        "confidence_stats": {
+          "mean_confidence": NaN,
+          "median_confidence": NaN,
+          "high_confidence_samples": 2962,
+          "low_confidence_samples": 111
+        }
+      }
+    },
+    {
+      "algorithm": "self_training_rf",
+      "success": true,
+      "metrics": {
+        "train_accuracy": 0.84,
+        "train_precision": 0.8480000000000001,
+        "train_recall": 0.84,
+        "train_f1": 0.8384415584415583,
+        "val_accuracy": 0.6,
+        "val_precision": 0.6,
+        "val_recall": 0.6,
+        "val_f1": 0.6,
+        "val_roc_auc": 0.6666666666666666
+      },
+      "training_time_seconds": 42.533743,
+      "labeled_samples": 25,
+      "unlabeled_samples": 8328,
+      "pseudo_label_stats": {
+        "total_unlabeled": 8328,
+        "pseudo_label_distribution": {
+          "positive": 5861,
+          "negative": 2467
+        },
+        "confidence_stats": {
+          "mean_confidence": 0.9924662139859695,
+          "median_confidence": 0.9990444322105771,
+          "high_confidence_samples": 8314,
+          "low_confidence_samples": 6
+        }
+      }
+    },
+    {
+      "algorithm": "self_training_lr",
+      "success": true,
+      "metrics": {
+        "train_accuracy": 0.84,
+        "train_precision": 0.8498701298701299,
+        "train_recall": 0.84,
+        "train_f1": 0.8394871794871795,
+        "val_accuracy": 0.8,
+        "val_precision": 0.85,
+        "val_recall": 0.8,
+        "val_f1": 0.7809523809523808,
+        "val_roc_auc": 0.8333333333333333,
+        "cv_f1_mean": 0.5333333333333333,
+        "cv_f1_std": 0.21107649793821054
+      },
+      "training_time_seconds": 0.652599,
+      "labeled_samples": 25,
+      "unlabeled_samples": 8328,
+      "pseudo_label_stats": {
+        "total_unlabeled": 8328,
+        "pseudo_label_distribution": {
+          "positive": 4929,
+          "negative": 3399
+        },
+        "confidence_stats": {
+          "mean_confidence": 0.9776033862798382,
+          "median_confidence": 0.9999997090195438,
+          "high_confidence_samples": 7968,
+          "low_confidence_samples": 115
+        }
+      }
+    },
+    {
+      "algorithm": "self_training_gb",
+      "success": true,
+      "metrics": {
+        "train_accuracy": 0.92,
+        "train_precision": 0.92,
+        "train_recall": 0.92,
+        "train_f1": 0.92,
+        "val_accuracy": 0.6,
+        "val_precision": 0.6,
+        "val_recall": 0.6,
+        "val_f1": 0.6,
+        "val_roc_auc": 0.6666666666666666
+      },
+      "training_time_seconds": 93.758683,
+      "labeled_samples": 25,
+      "unlabeled_samples": 8328,
+      "pseudo_label_stats": {
+        "total_unlabeled": 8328,
+        "pseudo_label_distribution": {
+          "positive": 4913,
+          "negative": 3415
+        },
+        "confidence_stats": {
+          "mean_confidence": 0.9997605519647371,
+          "median_confidence": 0.9999778439851149,
+          "high_confidence_samples": 8324,
+          "low_confidence_samples": 1
+        }
+      }
+    }
+  ],
+  "comparison": {
+    "best_model": "label_propagation",
+    "best_f1_score": 0.7809523809523808,
+    "models_count": 5
+  },
+  "recommendations": [
+    "Pocos datos etiquetados - etiquetar más muestras mejorará el rendimiento",
+    "Considerar ensemble de Label Propagation y Self-Training RF"
+  ]
+}

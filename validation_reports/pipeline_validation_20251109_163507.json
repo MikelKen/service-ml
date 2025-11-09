@@ -1,0 +1,257 @@
+{
+  "timestamp": "2025-11-09T16:35:07.828970",
+  "summary": {
+    "total_validations": 12,
+    "successful": 7,
+    "failed": 5,
+    "success_rate": 0.5833333333333334
+  },
+  "validation_results": {
+    "Conexión PostgreSQL": {
+      "success": false,
+      "error": "No se pudo conectar a PostgreSQL: 'coroutine' object does not support the asynchronous context manager protocol",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 90, in _validate_postgres_connection\n    async with db.get_connection() as conn:\n               ~~~~~~~~~~~~~~~~~^^\nTypeError: 'coroutine' object does not support the asynchronous context manager protocol\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 100, in _validate_postgres_connection\n    raise Exception(f\"No se pudo conectar a PostgreSQL: {e}\")\nException: No se pudo conectar a PostgreSQL: 'coroutine' object does not support the asynchronous context manager protocol\n",
+      "timestamp": "2025-11-09T16:34:31.641605"
+    },
+    "Conexión MongoDB": {
+      "success": true,
+      "result": {
+        "connected": true,
+        "version": "8.0.4",
+        "collections_count": 7,
+        "collections": [
+          "job_offers_features",
+          "candidates_features",
+          "system.version",
+          "system.users",
+          "companies_features",
+          "system.roles",
+          "system.keys"
+        ]
+      },
+      "timestamp": "2025-11-09T16:34:35.214892"
+    },
+    "Datos en PostgreSQL": {
+      "success": false,
+      "error": "Error validando datos PostgreSQL: 'coroutine' object does not support the asynchronous context manager protocol",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 139, in _validate_postgres_data\n    async with db.get_connection() as conn:\n               ~~~~~~~~~~~~~~~~~^^\nTypeError: 'coroutine' object does not support the asynchronous context manager protocol\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 163, in _validate_postgres_data\n    raise Exception(f\"Error validando datos PostgreSQL: {e}\")\nException: Error validando datos PostgreSQL: 'coroutine' object does not support the asynchronous context manager protocol\n",
+      "timestamp": "2025-11-09T16:34:36.691238"
+    },
+    "Colecciones MongoDB": {
+      "success": true,
+      "result": {
+        "expected_collections": [
+          "ml_applications",
+          "ml_candidates",
+          "ml_job_offers",
+          "ml_interviews",
+          "ml_model_tracking"
+        ],
+        "existing_collections": [
+          "job_offers_features",
+          "candidates_features",
+          "system.version",
+          "system.users",
+          "companies_features",
+          "system.roles",
+          "system.keys"
+        ],
+        "collection_status": {
+          "ml_applications": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_candidates": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_job_offers": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_interviews": {
+            "exists": false,
+            "count": 0
+          },
+          "ml_model_tracking": {
+            "exists": false,
+            "count": 0
+          }
+        }
+      },
+      "timestamp": "2025-11-09T16:34:38.556388"
+    },
+    "Extracción de datos": {
+      "success": true,
+      "result": {
+        "extractor_file_exists": false,
+        "error": "Script extract_postgres_data.py no encontrado",
+        "extraction_script_ready": false
+      },
+      "timestamp": "2025-11-09T16:34:38.557621"
+    },
+    "Migración a MongoDB": {
+      "success": true,
+      "result": {
+        "migrated_counts": {
+          "ml_applications": 0,
+          "ml_candidates": 0,
+          "ml_job_offers": 0,
+          "ml_interviews": 0
+        },
+        "total_migrated": 0,
+        "sample_structures": {}
+      },
+      "timestamp": "2025-11-09T16:34:40.923904"
+    },
+    "Preprocessor": {
+      "success": true,
+      "result": {
+        "preprocessor_loaded": true,
+        "class_name": "SemiSupervisedPreprocessor",
+        "is_fitted": false,
+        "methods_available": [
+          "categorical_imputer",
+          "connect_mongodb",
+          "create_comprehensive_features",
+          "encode_categorical_features",
+          "extract_features_from_nested_data",
+          "feature_importance",
+          "feature_names",
+          "fit_transform",
+          "get_feature_importance_from_model",
+          "is_fitted",
+          "label_encoders",
+          "labeled_threshold",
+          "load_data_from_mongodb",
+          "load_preprocessor",
+          "min_labeled_samples",
+          "minmax_scaler",
+          "numeric_imputer",
+          "pca",
+          "preprocessing_config",
+          "process_text_features",
+          "save_preprocessor",
+          "split_labeled_unlabeled_data",
+          "standard_scaler",
+          "tfidf_requirements",
+          "tfidf_skills",
+          "transform"
+        ]
+      },
+      "timestamp": "2025-11-09T16:35:05.060163"
+    },
+    "Modelo semi-supervisado": {
+      "success": true,
+      "result": {
+        "model_class_loaded": true,
+        "algorithms_tested": {
+          "label_propagation": {
+            "can_initialize": true,
+            "algorithm_set": true
+          },
+          "label_spreading": {
+            "can_initialize": true,
+            "algorithm_set": true
+          },
+          "self_training_rf": {
+            "can_initialize": true,
+            "algorithm_set": true
+          }
+        },
+        "available_algorithms": [
+          "label_propagation",
+          "label_spreading",
+          "self_training_rf"
+        ]
+      },
+      "timestamp": "2025-11-09T16:35:06.306759"
+    },
+    "GraphQL Types": {
+      "success": false,
+      "error": "Error validando tipos GraphQL: cannot import name 'SemiSupervisedPredictionInput' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 327, in _validate_graphql_types\n    from app.graphql.types.semi_supervised_types import (\n    ...<4 lines>...\n    )\nImportError: cannot import name 'SemiSupervisedPredictionInput' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 347, in _validate_graphql_types\n    raise Exception(f\"Error validando tipos GraphQL: {e}\")\nException: Error validando tipos GraphQL: cannot import name 'SemiSupervisedPredictionInput' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)\n",
+      "timestamp": "2025-11-09T16:35:07.698109"
+    },
+    "GraphQL Resolvers": {
+      "success": false,
+      "error": "Error validando resolvers: cannot import name 'get_semi_supervised_models' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 352, in _validate_graphql_resolvers\n    from app.graphql.resolvers.semi_supervised_resolvers import (\n    ...<3 lines>...\n    )\nImportError: cannot import name 'get_semi_supervised_models' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 370, in _validate_graphql_resolvers\n    raise Exception(f\"Error validando resolvers: {e}\")\nException: Error validando resolvers: cannot import name 'get_semi_supervised_models' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)\n",
+      "timestamp": "2025-11-09T16:35:07.767309"
+    },
+    "GraphQL Mutations": {
+      "success": false,
+      "error": "Error validando mutations: cannot import name 'predict_application_labels' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 375, in _validate_graphql_mutations\n    from app.graphql.mutations.semi_supervised_mutations import (\n    ...<3 lines>...\n    )\nImportError: cannot import name 'predict_application_labels' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 60, in run_full_validation\n    result = await validation_func()\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\validate_semi_supervised_pipeline.py\", line 393, in _validate_graphql_mutations\n    raise Exception(f\"Error validando mutations: {e}\")\nException: Error validando mutations: cannot import name 'predict_application_labels' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)\n",
+      "timestamp": "2025-11-09T16:35:07.824438"
+    },
+    "Pipeline completo": {
+      "success": true,
+      "result": {
+        "components_status": {
+          "extract_postgres_data.py": {
+            "exists": false,
+            "size": 0
+          },
+          "create_mongo_collections_ml.py": {
+            "exists": false,
+            "size": 0
+          },
+          "migrate_postgres_to_mongo_ml.py": {
+            "exists": false,
+            "size": 0
+          },
+          "app/ml/preprocessing/semi_supervised_preprocessor.py": {
+            "exists": true,
+            "size": 25120
+          },
+          "app/ml/models/semi_supervised_model.py": {
+            "exists": true,
+            "size": 22308
+          },
+          "app/graphql/types/semi_supervised_types.py": {
+            "exists": true,
+            "size": 9930
+          },
+          "app/graphql/resolvers/semi_supervised_resolvers.py": {
+            "exists": true,
+            "size": 23810
+          },
+          "app/graphql/mutations/semi_supervised_mutations.py": {
+            "exists": true,
+            "size": 25216
+          },
+          "train_semi_supervised_step_by_step.py": {
+            "exists": true,
+            "size": 14273
+          }
+        },
+        "directories_status": {
+          "trained_models/semi_supervised": {
+            "exists": true,
+            "is_directory": true
+          },
+          "training_reports": {
+            "exists": false,
+            "is_directory": false
+          },
+          "logs": {
+            "exists": true,
+            "is_directory": true
+          }
+        },
+        "all_components_exist": false,
+        "pipeline_ready": false
+      },
+      "timestamp": "2025-11-09T16:35:07.828064"
+    }
+  },
+  "errors": [
+    "Error en Conexión PostgreSQL: No se pudo conectar a PostgreSQL: 'coroutine' object does not support the asynchronous context manager protocol",
+    "Error en Datos en PostgreSQL: Error validando datos PostgreSQL: 'coroutine' object does not support the asynchronous context manager protocol",
+    "Error en GraphQL Types: Error validando tipos GraphQL: cannot import name 'SemiSupervisedPredictionInput' from 'app.graphql.types.semi_supervised_types' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\types\\semi_supervised_types.py)",
+    "Error en GraphQL Resolvers: Error validando resolvers: cannot import name 'get_semi_supervised_models' from 'app.graphql.resolvers.semi_supervised_resolvers' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\resolvers\\semi_supervised_resolvers.py)",
+    "Error en GraphQL Mutations: Error validando mutations: cannot import name 'predict_application_labels' from 'app.graphql.mutations.semi_supervised_mutations' (C:\\Users\\USUARIO\\Desktop\\UAGRM\\sw2\\2doParcial\\desarrollo\\service_ml\\app\\graphql\\mutations\\semi_supervised_mutations.py)"
+  ],
+  "pipeline_status": "NEEDS_ATTENTION"
+}

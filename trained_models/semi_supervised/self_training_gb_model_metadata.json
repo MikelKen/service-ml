@@ -1,0 +1,35 @@
+{
+  "algorithm": "self_training_gb",
+  "version": "1.0",
+  "created_at": "2025-11-09T20:56:45.256198+00:00",
+  "training_config": {
+    "base_classifier": "GradientBoostingClassifier(max_depth=6, random_state=42)",
+    "threshold": 0.8,
+    "max_iter": 10,
+    "verbose": true
+  },
+  "performance_metrics": {
+    "train_accuracy": 0.92,
+    "train_precision": 0.92,
+    "train_recall": 0.92,
+    "train_f1": 0.92,
+    "val_accuracy": 0.6,
+    "val_precision": 0.6,
+    "val_recall": 0.6,
+    "val_f1": 0.6,
+    "val_roc_auc": 0.6666666666666666
+  },
+  "pseudo_label_stats": {
+    "total_unlabeled": 8328,
+    "pseudo_label_distribution": {
+      "positive": 4913,
+      "negative": 3415
+    },
+    "confidence_stats": {
+      "mean_confidence": 0.9997605519647371,
+      "median_confidence": 0.9999778439851149,
+      "high_confidence_samples": 8324,
+      "low_confidence_samples": 1
+    }
+  }
+}

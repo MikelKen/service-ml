@@ -1,0 +1,38 @@
+{
+  "algorithm": "label_propagation",
+  "version": "1.0",
+  "created_at": "2025-11-09T20:54:05.310202+00:00",
+  "training_config": {
+    "kernel": "knn",
+    "n_neighbors": 7,
+    "gamma": 20,
+    "max_iter": 1000,
+    "tol": 0.001
+  },
+  "performance_metrics": {
+    "train_accuracy": 0.92,
+    "train_precision": 0.92,
+    "train_recall": 0.92,
+    "train_f1": 0.92,
+    "val_accuracy": 0.8,
+    "val_precision": 0.85,
+    "val_recall": 0.8,
+    "val_f1": 0.7809523809523808,
+    "val_roc_auc": 0.5,
+    "cv_f1_mean": 0.5595238095238095,
+    "cv_f1_std": 0.2227838707384906
+  },
+  "pseudo_label_stats": {
+    "total_unlabeled": 8328,
+    "pseudo_label_distribution": {
+      "positive": 4592,
+      "negative": 3736
+    },
+    "confidence_stats": {
+      "mean_confidence": NaN,
+      "median_confidence": NaN,
+      "high_confidence_samples": 4828,
+      "low_confidence_samples": 1365
+    }
+  }
+}
