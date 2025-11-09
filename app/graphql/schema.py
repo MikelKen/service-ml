@@ -25,10 +25,16 @@ from app.graphql.types.clustering_types import (
     ClusterAnalysis, ClusterProfile, SimilarCandidates,
     ClusteringQueryInput, SimilarCandidatesInput, ClusterProfileInput
 )
+from app.graphql.types.postulaciones_types import (
+    EstadoDistribution, PostulacionPrediction, SemiSupervisedModelInfo,
+    PostulacionPredictionResult, PredictionBatch, TrainingResult,
+    PostulacionInput, PredictionFilter, TrainingConfig, PostulacionesDatasetStats
+)
 from app.graphql.resolvers import erp_resolvers
 from app.graphql.resolvers import ml_resolvers
 from app.graphql.resolvers import feature_resolvers
 from app.graphql.resolvers.clustering_resolvers import clustering_resolver
+from app.graphql.resolvers.postulaciones_resolvers import PostulacionesQuery, PostulacionesMutation
 from app.graphql.mutations.ml_mutations import MLMutation
 
 
@@ -163,6 +169,40 @@ class Query:
     @strawberry.field(description="Obtiene detalles específicos de un cluster")
     async def get_cluster_profile_details(self, input: ClusterProfileInput) -> ClusterProfile:
         return await clustering_resolver.get_cluster_profile_details(input)
+    
+    # ==========================================
+    # CONSULTAS DE POSTULACIONES SEMI-SUPERVISADO
+    # ==========================================
+    
+    @strawberry.field(description="Distribución de estados de postulaciones")
+    async def estados_distribution(self) -> List[EstadoDistribution]:
+        query_instance = PostulacionesQuery()
+        return await query_instance.get_estados_distribution()
+    
+    @strawberry.field(description="Información del modelo semi-supervisado")
+    async def semi_supervised_model_info(self) -> Optional[SemiSupervisedModelInfo]:
+        query_instance = PostulacionesQuery()
+        return await query_instance.get_model_info()
+    
+    @strawberry.field(description="Predicciones guardadas con filtros")
+    async def postulaciones_predictions(self, filters: Optional[PredictionFilter] = None) -> List[PostulacionPrediction]:
+        query_instance = PostulacionesQuery()
+        return await query_instance.get_predictions(filters)
+    
+    @strawberry.field(description="Predice estado de una postulación individual")
+    async def predict_postulacion_estado(self, postulacion_data: PostulacionInput) -> Optional[PostulacionPredictionResult]:
+        query_instance = PostulacionesQuery()
+        return await query_instance.predict_single_postulacion(postulacion_data)
+    
+    @strawberry.field(description="Todas las predicciones en lote con info del modelo")
+    async def all_predictions_batch(self) -> Optional[PredictionBatch]:
+        query_instance = PostulacionesQuery()
+        return await query_instance.get_all_predictions_batch()
+    
+    @strawberry.field(description="Estadísticas del dataset de postulaciones")
+    async def postulaciones_dataset_stats(self) -> Optional[PostulacionesDatasetStats]:
+        query_instance = PostulacionesQuery()
+        return await query_instance.postulaciones_dataset_stats()
 
 
 @strawberry.type
@@ -171,6 +211,22 @@ class Mutation:
     
     # Incluir mutaciones ML
     ml: MLMutation = strawberry.field(resolver=lambda: MLMutation())
+    
+    # Mutaciones de postulaciones semi-supervisado
+    @strawberry.mutation(description="Entrena el modelo semi-supervisado")
+    async def train_semi_supervised_model(self, config: Optional[TrainingConfig] = None) -> TrainingResult:
+        mutation_instance = PostulacionesMutation()
+        return await mutation_instance.train_semi_supervised_model(config)
+    
+    @strawberry.mutation(description="Carga un modelo previamente entrenado")
+    async def load_trained_model(self, model_path: Optional[str] = None) -> TrainingResult:
+        mutation_instance = PostulacionesMutation()
+        return await mutation_instance.load_trained_model(model_path)
+    
+    @strawberry.mutation(description="Extrae datos desde PostgreSQL a MongoDB")
+    async def extract_data_from_postgres(self) -> TrainingResult:
+        mutation_instance = PostulacionesMutation()
+        return await mutation_instance.extract_data_from_postgres()
 
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
