@@ -125,14 +125,18 @@ query GetModels {
   getSemiSupervisedModels {
     modelId
     algorithm
+    version
+    createdAt
     isActive
-    trainedAt
-    metrics {
+    performanceMetrics {
       trainAccuracy
       trainF1
       valAccuracy
       valF1
     }
+    totalSamples
+    labeledSamples
+    unlabeledSamples
   }
 }
 ```
@@ -146,7 +150,7 @@ query GetPredictions($limit: Int) {
     predictedLabel
     confidence
     algorithm
-    predictedAt
+    predictionDate
   }
 }
 ```
@@ -156,70 +160,184 @@ query GetPredictions($limit: Int) {
 ```graphql
 query GetPerformance($modelId: String!) {
   getModelPerformance(modelId: $modelId) {
+    trainAccuracy
+    trainF1
+    valAccuracy
+    valF1
+  }
+}
+```
+
+#### 4. Estadísticas del dataset
+
+```graphql
+query GetDatasetStats {
+  datasetStatistics {
+    totalApplications
+    labeledApplications
+    unlabeledApplications
+    labeledRatio
+    acceptedApplications
+    rejectedApplications
+    pendingApplications
+    applicationsLastWeek
+    applicationsLastMonth
+    dataQualityScore
+  }
+}
+```
+
+#### 5. Información del modelo activo
+
+```graphql
+query GetActiveModel {
+  activeModelInfo {
     modelId
     algorithm
-    metrics {
+    version
+    createdAt
+    isActive
+    performanceMetrics {
       trainAccuracy
+      trainPrecision
+      trainRecall
       trainF1
       valAccuracy
+      valPrecision
+      valRecall
       valF1
+      valRocAuc
+      cvF1Mean
+      cvF1Std
     }
-    trainingTime
     totalSamples
+    labeledSamples
+    unlabeledSamples
+    labeledRatio
+    positiveSamples
+    negativeSamples
+    nFeatures
   }
 }
 ```
 
 ### Mutations disponibles:
 
+**⚠️ Nota importante: Para usar las mutaciones, primero necesitas obtener IDs reales de aplicaciones de tu base de datos.**
+
+#### 0. Obtener IDs de aplicaciones disponibles
+
+```graphql
+query {
+  applicationsWithPredictions(pagination: { page: 1, pageSize: 10 }) {
+    applications {
+      applicationId
+      candidateId
+      offerId
+      isLabeled
+      mlTarget
+    }
+    totalApplications
+    currentPage
+  }
+}
+```
+
+**O consultar aplicaciones específicas:**
+
+```graphql
+query {
+  datasetStatistics {
+    totalApplications
+    labeledApplications
+    unlabeledApplications
+    sampleApplicationIds
+  }
+}
+```
+
 #### 1. Entrenar modelo
 
 ```graphql
-mutation TrainModel($algorithm: String!, $config: TrainingConfigInput) {
-  trainSemiSupervisedModel(algorithm: $algorithm, config: $config) {
-    success
-    modelId
-    algorithm
-    metrics {
-      trainAccuracy
-      trainF1
+mutation TrainModel($parameters: TrainingParameters!) {
+  semiSupervised {
+    trainSemiSupervisedModel(parameters: $parameters) {
+      success
+      modelId
+      algorithm
+      metrics {
+        trainAccuracy
+        trainF1
+      }
+      trainingTime
+      message
     }
-    trainingTime
-    message
   }
 }
 ```
 
-#### 2. Hacer predicciones
+#### 2. Hacer predicciones en lote
 
 ```graphql
-mutation PredictLabels($input: SemiSupervisedPredictionInput!) {
-  predictApplicationLabels(input: $input) {
-    predictions {
-      applicationId
-      predictedLabel
-      confidence
+mutation {
+  semiSupervised {
+    predictBatchApplications(
+      batchInput: {
+        applicationIds: ["app_001", "app_002", "app_003"]
+        includeFeatures: false
+        confidenceThreshold: 0.5
+        updateDatabase: true
+      }
+    ) {
+      batchId
+      totalPredictions
+      successfulPredictions
+      failedPredictions
+      predictions {
+        applicationId
+        candidateId
+        offerId
+        prediction
+        probability
+        confidenceLevel
+        compatibilityScore
+        predictedAt
+        modelAlgorithm
+      }
+      errors
     }
-    totalPredictions
-    avgConfidence
-    algorithm
-    success
   }
 }
 ```
 
-#### 3. Re-entrenar con feedback
+#### 3. Re-entrenar con nuevas etiquetas
 
 ```graphql
-mutation RetrainModel($modelId: String!, $feedback: [LabelFeedbackInput!]!) {
-  retrainModelWithFeedback(modelId: $modelId, feedback: $feedback) {
-    success
-    newModelId
-    improvementMetrics {
-      accuracyImprovement
-      f1Improvement
+mutation RetrainModel($modelId: String!, $newLabels: [LabelInput!]!) {
+  semiSupervised {
+    retrainModelWithNewLabels(modelId: $modelId, newLabels: $newLabels) {
+      success
+      newModelId
+      improvementMetrics {
+        accuracyImprovement
+        f1Improvement
+      }
+      message
     }
-    message
+  }
+}
+```
+
+#### 4. Activar modelo específico
+
+```graphql
+mutation ActivateModel($modelId: String!) {
+  semiSupervised {
+    activateModel(modelId: $modelId) {
+      success
+      message
+      timestamp
+    }
   }
 }
 ```

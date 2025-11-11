@@ -66,7 +66,7 @@ class OfferFeatures:
     modalidad_trabajo: str
 
 @strawberry.type
-class ModelMetrics:
+class SemiSupervisedModelMetrics:
     train_accuracy: float
     train_precision: float
     train_recall: float
@@ -144,7 +144,7 @@ class ApplicationWithPrediction:
     offer_location: str
 
 @strawberry.type
-class ModelTrainingResult:
+class SemiSupervisedTrainingResult:
     training_id: str
     algorithm: SemiSupervisedAlgorithm
     training_started_at: datetime
@@ -155,7 +155,7 @@ class ModelTrainingResult:
     training_config: TrainingConfig
     
     # Métricas del modelo
-    metrics: ModelMetrics
+    metrics: SemiSupervisedModelMetrics
     
     # Estadísticas de pseudo-etiquetas
     pseudo_label_stats: PseudoLabelStats
@@ -169,7 +169,7 @@ class ModelTrainingResult:
     preprocessor_path: Optional[str] = None
 
 @strawberry.type
-class ModelInfo:
+class SemiSupervisedModelInfo:
     model_id: str
     algorithm: SemiSupervisedAlgorithm
     version: str
@@ -177,7 +177,7 @@ class ModelInfo:
     is_active: bool
     
     # Métricas del modelo
-    performance_metrics: ModelMetrics
+    performance_metrics: SemiSupervisedModelMetrics
     
     # Información del dataset
     total_samples: int

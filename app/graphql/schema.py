@@ -25,11 +25,25 @@ from app.graphql.types.clustering_types import (
     ClusterAnalysis, ClusterProfile, SimilarCandidates,
     ClusteringQueryInput, SimilarCandidatesInput, ClusterProfileInput
 )
+from app.graphql.types.semi_supervised_types import (
+    SemiSupervisedPrediction, ApplicationWithPrediction, SemiSupervisedTrainingResult,
+    SemiSupervisedModelInfo, BatchPredictionResult, ModelAnalysis, DatasetStatistics,
+    ModelComparison, OperationResult, ValidationResult, PaginatedApplications,
+    FeatureImportance, CompatibilityFeatures, CandidateFeatures, OfferFeatures,
+    SemiSupervisedModelMetrics, PseudoLabelStats, TrainingConfig,
+    # Input types
+    TrainingParameters, PredictionInput, BatchPredictionInput,
+    ModelSelectionCriteria, ApplicationFilter, PaginationInput,
+    # Enums
+    SemiSupervisedAlgorithm, ConfidenceLevel, LabelQuality, PredictionStatus
+)
 from app.graphql.resolvers import erp_resolvers
 from app.graphql.resolvers import ml_resolvers
 from app.graphql.resolvers import feature_resolvers
 from app.graphql.resolvers.clustering_resolvers import clustering_resolver
+from app.graphql.resolvers.semi_supervised_resolvers import SemiSupervisedMLResolvers
 from app.graphql.mutations.ml_mutations import MLMutation
+from app.graphql.mutations.semi_supervised_mutations import SemiSupervisedMLMutations
 
 
 @strawberry.type
@@ -163,6 +177,82 @@ class Query:
     @strawberry.field(description="Obtiene detalles específicos de un cluster")
     async def get_cluster_profile_details(self, input: ClusterProfileInput) -> ClusterProfile:
         return await clustering_resolver.get_cluster_profile_details(input)
+    
+    # ==========================================
+    # CONSULTAS DE MODELOS SEMI-SUPERVISADOS
+    # ==========================================
+    
+    @strawberry.field(description="Estadísticas del dataset semi-supervisado")
+    async def dataset_statistics(self) -> DatasetStatistics:
+        resolver = SemiSupervisedMLResolvers()
+        return await resolver.get_dataset_statistics()
+    
+    @strawberry.field(description="Información del modelo semi-supervisado activo")
+    async def active_model_info(self) -> Optional[SemiSupervisedModelInfo]:
+        resolver = SemiSupervisedMLResolvers()
+        return await resolver.get_active_model_info()
+    
+    @strawberry.field(description="Predicción para una aplicación específica")
+    async def predict_single_application(self, prediction_input: PredictionInput) -> SemiSupervisedPrediction:
+        resolver = SemiSupervisedMLResolvers()
+        return await resolver.predict_single_application(prediction_input)
+    
+    @strawberry.field(description="Validar calidad del dataset")
+    async def validate_dataset(self) -> ValidationResult:
+        resolver = SemiSupervisedMLResolvers()
+        return await resolver.validate_dataset()
+    
+    @strawberry.field(description="Obtener aplicaciones con predicciones")
+    async def applications_with_predictions(
+        self, 
+        filter: Optional[ApplicationFilter] = None,
+        pagination: Optional[PaginationInput] = None
+    ) -> PaginatedApplications:
+        resolver = SemiSupervisedMLResolvers()
+        return await resolver.get_applications_with_predictions(filter, pagination)
+    
+    # Alias para compatibilidad con la guía
+    @strawberry.field(description="Estadísticas del dataset (alias)", name="getSemiSupervisedDataset")
+    async def get_semi_supervised_dataset(self) -> DatasetStatistics:
+        resolver = SemiSupervisedMLResolvers()
+        return await resolver.get_dataset_statistics()
+    
+    @strawberry.field(description="Predicciones semi-supervisadas (alias)", name="getSemiSupervisedPredictions")
+    async def get_semi_supervised_predictions(self, limit: Optional[int] = 10) -> List[SemiSupervisedPrediction]:
+        resolver = SemiSupervisedMLResolvers()
+        # Crear un filtro simple para obtener predicciones recientes
+        filter_input = ApplicationFilter(limit=limit or 10)
+        pagination = PaginationInput(page=1, page_size=limit or 10)
+        result = await resolver.get_applications_with_predictions(filter_input, pagination)
+        
+        # Convertir ApplicationWithPrediction a SemiSupervisedPrediction
+        predictions = []
+        for app in result.applications:
+            if app.prediction:
+                predictions.append(SemiSupervisedPrediction(
+                    application_id=app.application_id,
+                    predicted_label=app.prediction.predicted_label,
+                    confidence=app.prediction.confidence,
+                    prediction_date=app.prediction.prediction_date,
+                    algorithm=app.prediction.algorithm,
+                    probability=app.prediction.probability
+                ))
+        
+        return predictions
+    
+    @strawberry.field(description="Información de modelos (alias)", name="getSemiSupervisedModels")
+    async def get_semi_supervised_models(self) -> List[SemiSupervisedModelInfo]:
+        resolver = SemiSupervisedMLResolvers()
+        active_model = await resolver.get_active_model_info()
+        return [active_model] if active_model else []
+    
+    @strawberry.field(description="Rendimiento del modelo (alias)", name="getModelPerformance") 
+    async def get_model_performance_alias(self, model_id: str) -> Optional[SemiSupervisedModelMetrics]:
+        resolver = SemiSupervisedMLResolvers()
+        active_model = await resolver.get_active_model_info()
+        if active_model and active_model.model_id == model_id:
+            return active_model.performance_metrics
+        return None
 
 
 @strawberry.type
@@ -171,6 +261,9 @@ class Mutation:
     
     # Incluir mutaciones ML
     ml: MLMutation = strawberry.field(resolver=lambda: MLMutation())
+    
+    # Incluir mutaciones semi-supervisadas
+    semi_supervised: SemiSupervisedMLMutations = strawberry.field(resolver=lambda: SemiSupervisedMLMutations())
 
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)

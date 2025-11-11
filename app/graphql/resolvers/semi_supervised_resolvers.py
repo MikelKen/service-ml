@@ -13,11 +13,11 @@ import os
 import uuid
 
 from app.graphql.types.semi_supervised_types import (
-    SemiSupervisedPrediction, ApplicationWithPrediction, ModelTrainingResult,
-    ModelInfo, BatchPredictionResult, ModelAnalysis, DatasetStatistics,
+    SemiSupervisedPrediction, ApplicationWithPrediction, SemiSupervisedTrainingResult,
+    SemiSupervisedModelInfo, BatchPredictionResult, ModelAnalysis, DatasetStatistics,
     ModelComparison, OperationResult, ValidationResult, PaginatedApplications,
     FeatureImportance, CompatibilityFeatures, CandidateFeatures, OfferFeatures,
-    ModelMetrics, PseudoLabelStats, TrainingConfig,
+    SemiSupervisedModelMetrics, PseudoLabelStats, TrainingConfig,
     # Input types
     TrainingParameters, PredictionInput, BatchPredictionInput,
     ModelSelectionCriteria, ApplicationFilter, PaginationInput,
@@ -44,7 +44,7 @@ class SemiSupervisedMLResolvers:
     
     async def _get_db(self):
         """Obtener conexión a MongoDB"""
-        if not self.db:
+        if self.db is None:
             mongodb_connection.connect_sync()
             self.db = get_mongodb_sync()
         return self.db
@@ -263,7 +263,7 @@ class SemiSupervisedMLResolvers:
             logger.error(f"❌ Error obteniendo aplicaciones: {e}")
             raise
     
-    async def get_active_model_info(self) -> Optional[ModelInfo]:
+    async def get_active_model_info(self) -> Optional[SemiSupervisedModelInfo]:
         """Obtener información del modelo activo"""
         logger.info("ℹ️ Obteniendo información del modelo activo...")
         
@@ -277,7 +277,7 @@ class SemiSupervisedMLResolvers:
                 sort=[('created_at', -1)]
             )
             
-            if not active_model:
+            if active_model is None:
                 return None
             
             # Obtener estadísticas del dataset
@@ -285,7 +285,7 @@ class SemiSupervisedMLResolvers:
             
             # Convertir métricas
             metrics_data = active_model.get('metrics', {})
-            metrics = ModelMetrics(
+            metrics = SemiSupervisedModelMetrics(
                 train_accuracy=metrics_data.get('accuracy', 0.0),
                 train_precision=metrics_data.get('precision', 0.0),
                 train_recall=metrics_data.get('recall', 0.0),
@@ -297,7 +297,7 @@ class SemiSupervisedMLResolvers:
             algorithm_str = active_model.get('algorithm', 'label_propagation')
             algorithm = SemiSupervisedAlgorithm(algorithm_str)
             
-            return ModelInfo(
+            return SemiSupervisedModelInfo(
                 model_id=active_model['model_id'],
                 algorithm=algorithm,
                 version=active_model.get('version', '1.0'),
@@ -341,7 +341,7 @@ class SemiSupervisedMLResolvers:
                 'offer_id': prediction_input.offer_id
             })
             
-            if not application:
+            if application is None:
                 # Crear aplicación temporal para predicción
                 application = {
                     'application_id': f"temp_{uuid.uuid4()}",
@@ -362,7 +362,7 @@ class SemiSupervisedMLResolvers:
             candidate = candidates_collection.find_one({'candidate_id': prediction_input.candidate_id})
             offer = offers_collection.find_one({'offer_id': prediction_input.offer_id})
             
-            if not candidate or not offer:
+            if candidate is None or offer is None:
                 raise ValueError("Candidato u oferta no encontrados")
             
             # Crear DataFrames temporales
@@ -446,9 +446,9 @@ class SemiSupervisedMLResolvers:
             missing_offers = 0
             
             for app in app_sample:
-                if not candidates_collection.find_one({'candidate_id': app['candidate_id']}):
+                if candidates_collection.find_one({'candidate_id': app['candidate_id']}) is None:
                     missing_candidates += 1
-                if not offers_collection.find_one({'offer_id': app['offer_id']}):
+                if offers_collection.find_one({'offer_id': app['offer_id']}) is None:
                     missing_offers += 1
             
             if missing_candidates > 0:

@@ -14,8 +14,8 @@ import uuid
 import json
 
 from app.graphql.types.semi_supervised_types import (
-    ModelTrainingResult, BatchPredictionResult, OperationResult,
-    SemiSupervisedPrediction, ModelInfo,
+    SemiSupervisedTrainingResult, BatchPredictionResult, OperationResult,
+    SemiSupervisedPrediction, SemiSupervisedModelInfo,
     # Input types
     TrainingParameters, PredictionInput, BatchPredictionInput,
     # Enums
@@ -41,7 +41,7 @@ class SemiSupervisedMLMutations:
     async def train_semi_supervised_model(
         self,
         parameters: TrainingParameters
-    ) -> ModelTrainingResult:
+    ) -> SemiSupervisedTrainingResult:
         """Entrenar un nuevo modelo semi-supervisado"""
         logger.info(f"🚀 Iniciando entrenamiento de modelo: {parameters.algorithm.value}")
         
@@ -65,10 +65,10 @@ class SemiSupervisedMLMutations:
             await self._save_training_record(training_id, algorithm, training_record, training_started, training_completed)
             
             # Convertir métricas
-            from app.graphql.types.semi_supervised_types import ModelMetrics, PseudoLabelStats, TrainingConfig
+            from app.graphql.types.semi_supervised_types import SemiSupervisedModelMetrics, PseudoLabelStats, TrainingConfig
             
             metrics_data = training_record.get('metrics', {})
-            metrics = ModelMetrics(
+            metrics = SemiSupervisedModelMetrics(
                 train_accuracy=metrics_data.get('train_accuracy', 0.0),
                 train_precision=metrics_data.get('train_precision', 0.0),
                 train_recall=metrics_data.get('train_recall', 0.0),
@@ -104,7 +104,7 @@ class SemiSupervisedMLMutations:
                 hyperparameters={}  # Se podría obtener de la configuración del algoritmo
             )
             
-            result = ModelTrainingResult(
+            result = SemiSupervisedTrainingResult(
                 training_id=training_id,
                 algorithm=parameters.algorithm,
                 training_started_at=training_started,
@@ -124,7 +124,7 @@ class SemiSupervisedMLMutations:
         except Exception as e:
             logger.error(f"❌ Error en entrenamiento: {e}")
             
-            return ModelTrainingResult(
+            return SemiSupervisedTrainingResult(
                 training_id=training_id,
                 algorithm=parameters.algorithm,
                 training_started_at=training_started,
@@ -138,7 +138,7 @@ class SemiSupervisedMLMutations:
                     features_used=[],
                     hyperparameters={}
                 ),
-                metrics=ModelMetrics(
+                metrics=SemiSupervisedModelMetrics(
                     train_accuracy=0.0,
                     train_precision=0.0,
                     train_recall=0.0,
@@ -326,7 +326,7 @@ class SemiSupervisedMLMutations:
         self,
         algorithm: SemiSupervisedAlgorithm,
         confidence_threshold: float = 0.8
-    ) -> ModelTrainingResult:
+    ) -> SemiSupervisedTrainingResult:
         """Re-entrenar modelo incorporando predicciones de alta confianza como nuevas etiquetas"""
         logger.info(f"🔄 Re-entrenando modelo con nuevas etiquetas: {algorithm.value}")
         
@@ -377,10 +377,10 @@ class SemiSupervisedMLMutations:
             await self._save_training_record(training_id, algorithm.value, training_record, training_started, training_completed)
             
             # Convertir resultado
-            from app.graphql.types.semi_supervised_types import ModelMetrics, PseudoLabelStats, TrainingConfig
+            from app.graphql.types.semi_supervised_types import SemiSupervisedModelMetrics, PseudoLabelStats, TrainingConfig
             
             metrics_data = training_record.get('metrics', {})
-            metrics = ModelMetrics(
+            metrics = SemiSupervisedModelMetrics(
                 train_accuracy=metrics_data.get('train_accuracy', 0.0),
                 train_precision=metrics_data.get('train_precision', 0.0),
                 train_recall=metrics_data.get('train_recall', 0.0),
@@ -404,7 +404,7 @@ class SemiSupervisedMLMutations:
                 hyperparameters={'confidence_threshold': confidence_threshold, 'promoted_labels': updated_count}
             )
             
-            result = ModelTrainingResult(
+            result = SemiSupervisedTrainingResult(
                 training_id=training_id,
                 algorithm=algorithm,
                 training_started_at=training_started,
