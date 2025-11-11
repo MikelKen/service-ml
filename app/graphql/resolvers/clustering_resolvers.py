@@ -17,9 +17,11 @@ from datetime import datetime
 from app.graphql.types.clustering_types import (
     ClusterAnalysis, ClusterProfile, ClusteringMetrics,
     CandidateClusterAssignment, SimilarCandidates,
-    ClusteringQueryInput, SimilarCandidatesInput, ClusterProfileInput
+    ClusteringQueryInput, SimilarCandidatesInput, ClusterProfileInput,
+    CandidateInCluster, CandidatesInCluster, GetCandidatesInClusterInput
 )
 from app.config.mongodb_connection import get_collection
+from app.config.connection import db
 from app.ml.models.candidates_clustering_model import CandidatesClusteringModel
 from app.ml.preprocessing.candidates_clustering_preprocessor import CandidatesClusteringPreprocessor
 
@@ -113,6 +115,45 @@ class ClusteringResolver:
         except Exception as e:
             logger.error(f"Error obteniendo datos de candidatos: {e}")
             raise
+    
+    async def _get_candidate_from_postgres(self, candidate_id: str) -> Optional[Dict[str, Any]]:
+        """Obtiene datos detallados de un candidato desde PostgreSQL"""
+        try:
+            if not await db.test_connection():
+                logger.warning("PostgreSQL not connected, attempting to connect...")
+                await db.connect()
+            
+            async with await db.get_connection() as conn:
+                # Consulta para obtener candidato por ID
+                query = """
+                    SELECT 
+                        id, 
+                        nombre, 
+                        email, 
+                        telefono,
+                        anios_experiencia,
+                        nivel_educacion,
+                        habilidades,
+                        idiomas,
+                        certificaciones
+                    FROM postulaciones 
+                    WHERE id = $1
+                """
+                
+                result = await conn.fetchrow(query, candidate_id)
+                
+                if result:
+                    # Convertir a diccionario
+                    candidate_data = dict(result)
+                    logger.info(f"✅ Datos de candidato {candidate_id} obtenidos de PostgreSQL")
+                    return candidate_data
+                else:
+                    logger.warning(f"Candidato {candidate_id} no encontrado en PostgreSQL")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Error obteniendo candidato de PostgreSQL: {e}")
+            return None
     
     def _create_cluster_profile(self, cluster_id: int, profile_data: Dict, 
                                algorithm: str) -> ClusterProfile:
@@ -330,6 +371,188 @@ class ClusteringResolver:
         except Exception as e:
             logger.error(f"Error obteniendo perfil del cluster: {e}")
             raise Exception(f"Error en perfil de cluster: {str(e)}")
+    
+    async def get_candidates_in_cluster(
+        self,
+        input: GetCandidatesInClusterInput
+    ) -> CandidatesInCluster:
+        """Obtiene todos los candidatos pertenecientes a un cluster específico
+        
+        Flujo:
+        1. Obtiene IDs de candidatos del clustering
+        2. Consulta PostgreSQL para obtener datos completos
+        3. Enriquece con distancias del clustering
+        """
+        
+        algorithm = input.algorithm or "kmeans"
+        
+        try:
+            logger.info(f"📊 Obteniendo candidatos del cluster {input.cluster_id}")
+            
+            # 1. Cargar modelo de clustering
+            model, preprocessor = self._load_model_and_preprocessor(algorithm)
+            
+            # 2. Verificar que el cluster existe
+            unique_clusters = np.unique(model.labels_)
+            if input.cluster_id not in unique_clusters:
+                raise ValueError(f"Cluster {input.cluster_id} no encontrado")
+            
+            # 3. Obtener datos de candidatos desde MongoDB (para IDs y distancias)
+            df = await self._get_candidates_data()
+            
+            # 4. Obtener datos procesados para distancias
+            cache_key = algorithm
+            distance_data = None
+            if cache_key in self.data_cache:
+                data_info = self.data_cache[cache_key]
+                X_processed = data_info['X_processed']
+                
+                # Calcular distancias al centro del cluster si es kmeans
+                if algorithm == "kmeans" and hasattr(model.model, 'cluster_centers_'):
+                    cluster_center = model.model.cluster_centers_[input.cluster_id]
+                    distance_data = {}
+            
+            # 5. Encontrar índices de candidatos en este cluster
+            cluster_indices = np.where(model.labels_ == input.cluster_id)[0]
+            
+            logger.info(f"Found {len(cluster_indices)} candidates in cluster {input.cluster_id}")
+            
+            # 6. Limitar resultados si es necesario
+            if input.limit and input.limit > 0:
+                cluster_indices = cluster_indices[:input.limit]
+            
+            # 7. Extraer datos de candidatos
+            candidates_data = []
+            total_candidates = len(np.where(model.labels_ == input.cluster_id)[0])
+            
+            # Conectar a PostgreSQL una sola vez
+            if not await db.test_connection():
+                logger.info("Conectando a PostgreSQL...")
+                await db.connect()
+            
+            for idx in cluster_indices:
+                candidate_row = df.iloc[idx]
+                candidate_id = str(candidate_row.get('_id', ''))
+                
+                logger.info(f"Procesando candidato: {candidate_id}")
+                
+                # Calcular distancia al centro si es posible
+                distance_to_center = None
+                if distance_data is not None and algorithm == "kmeans":
+                    try:
+                        sample_distance = np.linalg.norm(X_processed[idx] - cluster_center)
+                        distance_to_center = float(sample_distance)
+                    except Exception as e:
+                        logger.warning(f"Error calculando distancia: {e}")
+                        distance_to_center = None
+                
+                # **NUEVO: Obtener datos completos desde PostgreSQL**
+                postgres_data = await self._get_candidate_from_postgres(candidate_id)
+                
+                if postgres_data:
+                    # Usar datos de PostgreSQL (completos y actualizados)
+                    candidate = CandidateInCluster(
+                        candidate_id=candidate_id,
+                        name=postgres_data.get('nombre', ''),
+                        email=postgres_data.get('email', ''),
+                        years_experience=postgres_data.get('anios_experiencia'),
+                        education_area=postgres_data.get('nivel_educacion', ''),
+                        work_area='',
+                        skills=self._parse_list_field(postgres_data.get('habilidades')),
+                        certifications=self._parse_list_field(postgres_data.get('certificaciones')),
+                        english_level=postgres_data.get('idiomas'),
+                        cluster_id=input.cluster_id,
+                        distance_to_center=distance_to_center
+                    )
+                else:
+                    # Fallback a datos de MongoDB si no está en PostgreSQL
+                    logger.warning(f"Candidato {candidate_id} no encontrado en PostgreSQL, usando MongoDB")
+                    
+                    skills = []
+                    if 'skills' in candidate_row and candidate_row['skills']:
+                        if isinstance(candidate_row['skills'], (list, tuple)):
+                            skills = list(candidate_row['skills'])
+                        elif isinstance(candidate_row['skills'], str):
+                            skills = [s.strip() for s in str(candidate_row['skills']).split(',')]
+                    
+                    certifications = []
+                    if 'certifications' in candidate_row and candidate_row['certifications']:
+                        if isinstance(candidate_row['certifications'], (list, tuple)):
+                            certifications = list(candidate_row['certifications'])
+                        elif isinstance(candidate_row['certifications'], str):
+                            certifications = [c.strip() for c in str(candidate_row['certifications']).split(',')]
+                    
+                    english_level = None
+                    if 'english_level' in candidate_row:
+                        level_value = candidate_row['english_level']
+                        if level_value == 0 or level_value == '0':
+                            english_level = "No tiene"
+                        elif level_value == 1 or level_value == '1':
+                            english_level = "Básico"
+                        elif level_value == 2 or level_value == '2':
+                            english_level = "Intermedio"
+                        elif level_value == 3 or level_value == '3':
+                            english_level = "Avanzado"
+                        else:
+                            english_level = str(level_value)
+                    
+                    candidate = CandidateInCluster(
+                        candidate_id=candidate_id,
+                        name=str(candidate_row.get('name', candidate_row.get('full_name', ''))),
+                        email=str(candidate_row.get('email', '')),
+                        years_experience=float(candidate_row['anios_experiencia']) if 'anios_experiencia' in candidate_row else None,
+                        education_area=str(candidate_row.get('area_educacion', '')),
+                        work_area=str(candidate_row.get('area_trabajo', '')),
+                        skills=skills if skills else None,
+                        certifications=certifications if certifications else None,
+                        english_level=english_level,
+                        cluster_id=input.cluster_id,
+                        distance_to_center=distance_to_center
+                    )
+                
+                candidates_data.append(candidate)
+            
+            # 8. Calcular porcentaje
+            if total_candidates > 0:
+                cluster_percentage = (total_candidates / len(df)) * 100
+            else:
+                cluster_percentage = 0.0
+            
+            logger.info(f"✅ {len(candidates_data)} candidatos del cluster {input.cluster_id} procesados")
+            
+            return CandidatesInCluster(
+                cluster_id=input.cluster_id,
+                total_candidates=total_candidates,
+                cluster_percentage=cluster_percentage,
+                candidates=candidates_data
+            )
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo candidatos del cluster: {e}")
+            import traceback
+            traceback.print_exc()
+            raise Exception(f"Error obteniendo candidatos del cluster: {str(e)}")
+    
+    def _parse_list_field(self, field_value: Any) -> Optional[List[str]]:
+        """Convierte un campo en lista si es necesario"""
+        if not field_value:
+            return None
+        
+        if isinstance(field_value, (list, tuple)):
+            return list(field_value)
+        elif isinstance(field_value, str):
+            # Intentar parsear como JSON array
+            import json
+            try:
+                parsed = json.loads(field_value)
+                if isinstance(parsed, list):
+                    return parsed
+            except:
+                pass
+            # Si no es JSON, dividir por comas
+            return [s.strip() for s in field_value.split(',') if s.strip()]
+        
+        return None
 
 # Instancia global del resolver
 clustering_resolver = ClusteringResolver()

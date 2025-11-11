@@ -57,6 +57,37 @@ class SimilarCandidates:
     similar_candidates: List[CandidateClusterAssignment]
     similarity_criteria: List[str]
 
+@strawberry.type
+class CandidateInCluster:
+    """Datos de candidato perteneciente a un cluster"""
+    candidate_id: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    years_experience: Optional[float] = None
+    education_area: Optional[str] = None
+    work_area: Optional[str] = None
+    skills: Optional[List[str]] = None
+    certifications: Optional[List[str]] = None
+    english_level: Optional[str] = None
+    cluster_id: int
+    distance_to_center: Optional[float] = None
+
+@strawberry.type
+class CandidatesInCluster:
+    """Datos de todos los candidatos en un cluster específico"""
+    cluster_id: int
+    total_candidates: int
+    cluster_percentage: float
+    candidates: List[CandidateInCluster]
+
+@strawberry.input
+class GetCandidatesInClusterInput:
+    """Input para obtener candidatos de un cluster"""
+    cluster_id: int
+    algorithm: Optional[str] = "kmeans"
+    include_details: Optional[bool] = True
+    limit: Optional[int] = None  # Si es None, devuelve todos
+
 @strawberry.input
 class ClusteringQueryInput:
     """Input para consultas de clustering"""

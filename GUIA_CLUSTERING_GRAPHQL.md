@@ -168,6 +168,58 @@ query {
 }
 ```
 
+### **4. CANDIDATOS DE UN CLUSTER ESPECÍFICO** ⭐ **NUEVA QUERY**
+
+Obtiene todos los candidatos pertenecientes a un cluster con sus datos detallados.
+
+```graphql
+query {
+  getCandidatesInCluster(input: { clusterId: 3, algorithm: "kmeans", includeDetails: true, limit: 20 }) {
+    clusterId
+    totalCandidates
+    clusterPercentage
+    candidates {
+      candidateId
+      name
+      email
+      yearsExperience
+      educationArea
+      workArea
+      skills
+      certifications
+      englishLevel
+      distanceToCenter
+    }
+  }
+}
+```
+
+**📊 Resultado Ejemplo:**
+
+```json
+{
+  "clusterId": 3,
+  "totalCandidates": 4678,
+  "clusterPercentage": 47.2,
+  "candidates": [
+    {
+      "candidateId": "507f1f77bcf86cd799439011",
+      "name": "Juan Pérez García",
+      "email": "juan.perez@example.com",
+      "yearsExperience": 8.5,
+      "educationArea": "Sistemas",
+      "workArea": "Desarrollo",
+      "skills": ["Python", "Django", "PostgreSQL", "Docker", "AWS"],
+      "certifications": ["AWS Solutions Architect", "Docker Certified Associate"],
+      "englishLevel": "Avanzado",
+      "distanceToCenter": 2.34
+    }
+  ]
+}
+```
+
+```
+
 ---
 
 ## 🔧 **CARACTERÍSTICAS TÉCNICAS**
@@ -205,14 +257,16 @@ query {
 ### **Distribución de Candidatos:**
 
 ```
-Cluster 0:  382 candidatos (3.9%) - Perfil especializado
-Cluster 1:  492 candidatos (5.0%) - Perfil especializado
-Cluster 2:  357 candidatos (3.6%) - Perfil especializado
+
+Cluster 0: 382 candidatos (3.9%) - Perfil especializado
+Cluster 1: 492 candidatos (5.0%) - Perfil especializado
+Cluster 2: 357 candidatos (3.6%) - Perfil especializado
 Cluster 3: 4678 candidatos (47.2%) - PERFIL PRINCIPAL
-Cluster 4:  461 candidatos (4.7%) - Perfil especializado
+Cluster 4: 461 candidatos (4.7%) - Perfil especializado
 ...
 Cluster 12: 487 candidatos (4.9%) - Perfil especializado
-```
+
+````
 
 ### **Cluster Principal (Cluster 3):**
 
@@ -236,7 +290,7 @@ query {
     }
   }
 }
-```
+````
 
 ### **2. Análisis de Diversidad**
 
@@ -267,96 +321,119 @@ query {
 }
 ```
 
----
+### **4. Reclutamiento Masivo desde un Cluster** ⭐ **NUEVO**
 
-## 🔄 **REENTRENAMIENTO**
-
-### **Para Re-entrenar el Modelo:**
-
-```bash
-python train_clustering_step_by_step.py
-```
-
-Esto generará nuevos archivos .pkl con timestamp actualizado.
-
-### **Configuración de Parámetros:**
-
-```python
-# En candidates_clustering_model.py
-algorithm_configs = {
-    'kmeans': {
-        'n_clusters': 8,  # Cambiar número de clusters
-        'random_state': 42
-    },
-    'dbscan': {
-        'eps': 0.5,      # Ajustar distancia
-        'min_samples': 30 # Ajustar muestras mínimas
+```graphql
+# Obtener candidatos completos de un cluster para exportación
+query {
+  getCandidatesInCluster(input: { clusterId: 3, algorithm: "kmeans", limit: 100 }) {
+    clusterId
+    totalCandidates
+    candidates {
+      candidateId
+      name
+      email
+      yearsExperience
+      skills
+      certifications
     }
+  }
 }
-```
 
----
+    "1_basico_obtener_candidatos": """
+    # 🔷 EJEMPLO 1: Obtener primeros 10 candidatos del cluster principal
+    # Descripción: Obtiene los 10 primeros candidatos del cluster más grande (cluster 3)
+    query ObtenerCandidatosClustersBasico {
+      getCandidatesInCluster(input: {
+        clusterId: 3
+        algorithm: "kmeans"
+        limit: 10
+      }) {
+        clusterId
+        totalCandidates
+        clusterPercentage
+        candidates {
+          candidateId
+          name
+          email
+          yearsExperience
+          workArea
+        }
+      }
+    }
 
-## 📊 **MÉTRICAS DE CALIDAD**
+ "2_detalles_completos": """
+    # 🔷 EJEMPLO 2: Obtener datos COMPLETOS de 20 candidatos
+    # Descripción: Incluye skills, certificaciones, nivel de inglés y más
 
-### **Silhouette Score: 0.374**
+    query ObtenerDetallesCompletos {
+      getCandidatesInCluster(input: {
+        clusterId: 3
+        algorithm: "kmeans"
+        includeDetails: true
+        limit: 20
+      }) {
+        clusterId
+        totalCandidates
+        clusterPercentage
+        candidates {
+          candidateId
+          name
+          email
+          yearsExperience
+          educationArea
+          workArea
+          skills
+          certifications
+          englishLevel
+          distanceToCenter
+        }
+      }
+    }
 
-- ✅ **> 0.25** = Clustering razonable
-- ✅ **> 0.50** = Clustering bueno
-- ⭐ **> 0.70** = Clustering excelente
+   "4_cluster_especializado": """
+    # 🔷 EJEMPLO 4: Explorar cluster especializado (pequeño)
+    # Descripción: Ver candidatos de un cluster nicho (cluster 0)
 
-### **Interpretación:**
+    query ExplorarClusterEspecializado {
+      getCandidatesInCluster(input: {
+        clusterId: 0
+        algorithm: "kmeans"
+        limit: 50
+      }) {
+        clusterId
+        totalCandidates
+        clusterPercentage
+        candidates {
+          name
+          educationArea
+          certifications
+          englishLevel
+        }
+      }
+    }
 
-- **0.374** indica clustering **bueno** con separación clara entre grupos
-- Los candidatos están bien agrupados por similitud de perfil
-- Se pueden identificar patrones claros en los datos
+        "5_analisis_skills": """
+    # 🔷 EJEMPLO 5: Análisis de Skills en un cluster
+    # Descripción: Obtener todas las habilidades técnicas de candidatos
 
----
+    query AnalisisSkillsCluster {
+      getCandidatesInCluster(input: {
+        clusterId: 3
+        algorithm: "kmeans"
+        limit: 100
+      }) {
+        clusterId
+        totalCandidates
+        candidates {
+          name
+          skills
+          yearsExperience
+        }
+      }
+    }
 
-## 🎯 **PRÓXIMOS PASOS SUGERIDOS**
 
-### **1. Mejoras del Modelo:**
-
-- 🔧 Ajustar parámetros de DBSCAN para mejor detección de outliers
-- 📈 Probar diferentes números de clusters en K-Means
-- 🎨 Implementar visualizaciones 2D con PCA
-
-### **2. Features Adicionales:**
-
-- 💰 Incorporar rangos salariales esperados
-- 🌍 Agregar preferencias de ubicación
-- 📅 Incluir disponibilidad de inicio
-
-### **3. Aplicaciones Avanzadas:**
-
-- 🤖 Sistema de recomendación automática
-- 📊 Dashboard de análisis de clusters
-- 🔍 Búsqueda semántica avanzada
-
----
-
-## ✅ **RESUMEN FINAL**
-
-### **SISTEMA COMPLETAMENTE FUNCIONAL:**
-
-- ✅ **Entrenamiento** paso a paso completado
-- ✅ **Modelos .pkl** generados y guardados
-- ✅ **GraphQL API** implementada y probada
-- ✅ **13 clusters** de candidatos identificados
-- ✅ **Búsqueda de similitud** funcionando
-- ✅ **Análisis descriptivo** de perfiles
-
-### **READY TO USE:**
-
-```bash
-# 1. Servidor en ejecución
-uvicorn app.main:app --reload
-
-# 2. Probar GraphQL
-python test_clustering_simple.py
-
-# 3. Usar consultas en GraphiQL
-http://localhost:8000/graphql
-```
 
 🎉 **¡SISTEMA DE CLUSTERING DE CANDIDATOS COMPLETAMENTE OPERATIVO!** 🎉
+```

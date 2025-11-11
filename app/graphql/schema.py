@@ -23,7 +23,8 @@ from app.graphql.types.feature_types import (
 )
 from app.graphql.types.clustering_types import (
     ClusterAnalysis, ClusterProfile, SimilarCandidates,
-    ClusteringQueryInput, SimilarCandidatesInput, ClusterProfileInput
+    ClusteringQueryInput, SimilarCandidatesInput, ClusterProfileInput,
+    CandidatesInCluster, GetCandidatesInClusterInput
 )
 from app.graphql.resolvers import erp_resolvers
 from app.graphql.resolvers import ml_resolvers
@@ -163,6 +164,10 @@ class Query:
     @strawberry.field(description="Obtiene detalles específicos de un cluster")
     async def get_cluster_profile_details(self, input: ClusterProfileInput) -> ClusterProfile:
         return await clustering_resolver.get_cluster_profile_details(input)
+    
+    @strawberry.field(description="Obtiene todos los candidatos pertenecientes a un cluster específico")
+    async def get_candidates_in_cluster(self, input: GetCandidatesInClusterInput) -> CandidatesInCluster:
+        return await clustering_resolver.get_candidates_in_cluster(input)
 
 
 @strawberry.type
